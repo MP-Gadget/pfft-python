@@ -12,7 +12,7 @@ def myext(*args):
         mpi4py.get_include(),
         numpy.get_include(),
         ],
-        libraries=["pfft", "fftw3", "fftw3_mpi"])
+        libraries=["fftw3", "fftw3_mpi", "pfft"])
 
 extensions = [
         myext("pfft.core", ["src/core.pyx"]),
