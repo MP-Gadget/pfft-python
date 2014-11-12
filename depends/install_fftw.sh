@@ -8,7 +8,7 @@ LOGFILE="build.log"
 # bash check if directory exists
 if [ -d $TMP ]; then
         echo "Directory $TMP already exists. Delete it? (y/n)"
-	read answer
+	answer=y
 	if [ ${answer} = "y" ]; then
 		rm -rf $TMP
 	else
