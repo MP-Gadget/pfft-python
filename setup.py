@@ -1,6 +1,5 @@
 from distutils.core import setup
 from Cython.Build import cythonize
-#from distutils.extension import Extension
 from Cython.Distutils import Extension
 import numpy
 import mpi4py
@@ -16,6 +15,7 @@ def myext(*args):
 
 extensions = [
         myext("pfft.core", ["src/core.pyx"]),
+        myext("pfft.failure", ["src/failure.pyx"]),
         ]
 
 setup(
