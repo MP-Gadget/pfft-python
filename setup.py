@@ -11,7 +11,7 @@ def myext(*args):
         mpi4py.get_include(),
         numpy.get_include(),
         ],
-        libraries=["fftw3", "fftw3_mpi", "pfft"])
+        libraries=["pfft", "fftw3_mpi", "fftw3"])
 
 extensions = [
         myext("pfft.core", ["pfft/core.pyx"]),
