@@ -168,12 +168,14 @@ PFFT_EXECUTE_FUNC[:] = [
 cdef class ProcMesh(object):
     cdef MPI.MPI_Comm comm_cart
     cdef readonly numpy.ndarray np
+    cdef readonly int rank
     def __init__(self, np, comm = None):
         cdef MPI.MPI_Comm mpicomm
         if comm == "world" or comm is None:
             mpicomm = MPI.MPI_COMM_WORLD
         else:
             raise Exception("hahahah")
+        MPI.MPI_Comm_rank(mpicomm, &self.rank)
         cdef int [::1] np_ = numpy.array(np, 'int32')
         rt = pfft_create_procmesh(np_.shape[0], mpicomm, &np_[0], &self.comm_cart)
         if rt != 0:
@@ -200,6 +202,9 @@ cdef class Partition(object):
 
         local_ni, local_no, local_i_start, local_o_start = \
                 numpy.empty((4, n_.shape[0]), 'intp')
+
+        if len(n_) <= len(procmesh.np):
+            raise ValueError("ProcMesh (%d) shall have less dimentions than Mesh (%d)" % (len(procmesh.np), n_))
 
         self.type = Type(type)
         self.flags = Flags(flags)

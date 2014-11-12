@@ -6,14 +6,23 @@ import numpy
 from core import *
 
 
-def test_roundtrip_3d(type, flags, inplace):
-    procmesh = ProcMesh([1])
+def test_roundtrip_3d(procmesh, type, flags, inplace):
+    if numpy.product(procmesh.np) > 1:
+        strict = False
+    else:
+        strict = True
+
     Nmesh = [29, 30, 31]
-    #Nmesh = [2, 3, 2]
+#    Nmesh = [2, 3, 2]
     
-    print 'roundtrip test, single rank, Nmesh = ', Nmesh, 'inplace = ', inplace
     partition = Partition(type, Nmesh, procmesh, flags)
-    print repr(partition)
+    for rank in range(MPI.COMM_WORLD.size):
+        MPI.COMM_WORLD.barrier()
+        if rank != procmesh.rank:
+            continue
+        print procmesh.rank, 'roundtrip test, np=', procmesh.np, 'Nmesh = ', Nmesh, 'inplace = ', inplace
+        print repr(partition)
+
     buf1 = LocalBuffer(partition)
     if inplace:
         buf2 = buf1
@@ -32,7 +41,8 @@ def test_roundtrip_3d(type, flags, inplace):
             procmesh, 
             direction=Direction.PFFT_FORWARD, 
             flags=flags)
-    print repr(forward)
+    if procmesh.rank == 0:
+        print repr(forward)
 
     # find the inverse plan
     if type == Type.PFFT_R2C:
@@ -68,65 +78,99 @@ def test_roundtrip_3d(type, flags, inplace):
             procmesh, 
             direction=Direction.PFFT_BACKWARD, 
             flags=bflags)
-    print repr(backward)
+    if procmesh.rank == 0:
+        print repr(backward)
 
     i = numpy.array(buf1.buffer, copy=False)
     numpy.random.seed(9999)
     i[:] = numpy.random.normal(size=i.shape)
-    
     original = input.copy()
-    if type == Type.PFFT_R2C:
-        correct = numpy.fft.rfftn(original)
-    elif type == Type.PFFT_C2C:
-        correct = numpy.fft.fftn(original)
-    if flags & Flags.PFFT_TRANSPOSED_OUT:
-        correct = correct.transpose(buf1._transpose(numpy.arange(len(Nmesh))))
-        pass
 
-    original *= original.size # fftw vs numpy 
+    if strict:
+        if type == Type.PFFT_R2C:
+            correct = numpy.fft.rfftn(original)
+        elif type == Type.PFFT_C2C:
+            correct = numpy.fft.fftn(original)
+        if flags & Flags.PFFT_TRANSPOSED_OUT:
+            correct = correct.transpose(buf1._transpose(numpy.arange(len(Nmesh))))
+
+    original *= numpy.product(Nmesh) # fftw vs numpy 
 
     if not inplace:
         output[:] = 0
 
     forward.execute(buf1, buf2)
 
-    if False:
-        print output.shape
-        print correct.shape
-        print output
-        print correct
-        print i
+    if strict:
+        if False:
+            print output.shape
+            print correct.shape
+            print output
+            print correct
+            print i
 
-    r2cerr = numpy.abs(output - correct).std(dtype='f8')
-    print repr(forward.type), "error = ", r2cerr
+        r2cerr = numpy.abs(output - correct).std(dtype='f8')
+        print repr(forward.type), "error = ", r2cerr
+        i[:] = 0
+        output[:] = correct
 
-    i[:] = 0
-    output[:] = correct
     if not inplace:
         input[:] = 0
     backward.execute(buf2, buf1)
 
-    if False:
-        print original
-        print input
-        print i
-
     c2rerr = numpy.abs(original - input).std(dtype='f8')
-    print repr(backward.type), "error = ", c2rerr
+    for rank in range(MPI.COMM_WORLD.size):
+        MPI.COMM_WORLD.barrier()
+        if rank != procmesh.rank:
+            continue
+        print rank, repr(backward.type), "error = ", c2rerr
+        if False:
+            print original
+            print input
+            print i
+        MPI.COMM_WORLD.barrier()
+        
 
-    assert (r2cerr < 1e-5)
+    if strict:
+        assert (r2cerr < 1e-5)
     assert (c2rerr < 1e-5) 
 
+if MPI.COMM_WORLD.size == 1: 
+    nplist = [
+            [1],
+            [1, 1],
+            ]
+else:
+    s = MPI.COMM_WORLD.size
+    a = int(s ** 0.5)
+    while a > 1:
+        if s % a == 0:
+            d = s // a
+            break
+    
+    nplist = [
+            [s],
+            [1, s],
+            [s, 1],
+            ]
+    if a > 1:
+        nplist += [
+            [a, d],
+            [d, a],
+            ]
 
-for flags in [
-    Flags.PFFT_ESTIMATE | Flags.PFFT_DESTROY_INPUT,
-    Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_DESTROY_INPUT,
-    Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C,
-    Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT,
-    Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT | Flags.PFFT_DESTROY_INPUT,
-    Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_TRANSPOSED_OUT,
-    ]:
-    test_roundtrip_3d(Type.PFFT_R2C, flags, True)
-    test_roundtrip_3d(Type.PFFT_R2C, flags, False)
-    test_roundtrip_3d(Type.PFFT_C2C, flags, True)
-    test_roundtrip_3d(Type.PFFT_C2C, flags, False)
+for np in nplist:
+    procmesh = ProcMesh(np)
+    for flags in [
+        Flags.PFFT_ESTIMATE | Flags.PFFT_DESTROY_INPUT,
+        Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_DESTROY_INPUT,
+        Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C,
+        Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT,
+        Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT | Flags.PFFT_DESTROY_INPUT,
+        Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_TRANSPOSED_OUT,
+        ]:
+        test_roundtrip_3d(procmesh, Type.PFFT_R2C, flags, True)
+        test_roundtrip_3d(procmesh, Type.PFFT_R2C, flags, False)
+        test_roundtrip_3d(procmesh, Type.PFFT_C2C, flags, True)
+        test_roundtrip_3d(procmesh, Type.PFFT_C2C, flags, False)
+
