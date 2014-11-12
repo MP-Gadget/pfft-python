@@ -4,7 +4,7 @@ import os.path
 path.append(os.path.join(os.path.dirname(__file__), '../src'))
 import numpy
 from core import *
-
+import traceback
 
 def test_roundtrip_3d(procmesh, type, flags, inplace):
     if numpy.product(procmesh.np) > 1:
@@ -118,7 +118,11 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
         input[:] = 0
     backward.execute(buf2, buf1)
 
-    c2rerr = numpy.abs(original - input).std(dtype='f8')
+    if input.size > 0:
+        c2rerr = numpy.abs(original - input).std(dtype='f8')
+    else:
+        c2rerr = 0.0
+
     for rank in range(MPI.COMM_WORLD.size):
         MPI.COMM_WORLD.barrier()
         if rank != procmesh.rank:
@@ -147,7 +151,7 @@ else:
         if s % a == 0:
             d = s // a
             break
-    
+        a = a - 1 
     nplist = [
             [s],
             [1, s],
@@ -159,18 +163,21 @@ else:
             [d, a],
             ]
 
-for np in nplist:
-    procmesh = ProcMesh(np)
-    for flags in [
-        Flags.PFFT_ESTIMATE | Flags.PFFT_DESTROY_INPUT,
-        Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_DESTROY_INPUT,
-        Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C,
-        Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT,
-        Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT | Flags.PFFT_DESTROY_INPUT,
-        Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_TRANSPOSED_OUT,
-        ]:
-        test_roundtrip_3d(procmesh, Type.PFFT_R2C, flags, True)
-        test_roundtrip_3d(procmesh, Type.PFFT_R2C, flags, False)
-        test_roundtrip_3d(procmesh, Type.PFFT_C2C, flags, True)
-        test_roundtrip_3d(procmesh, Type.PFFT_C2C, flags, False)
-
+try:
+    for np in nplist:
+        procmesh = ProcMesh(np)
+        for flags in [
+            Flags.PFFT_ESTIMATE | Flags.PFFT_DESTROY_INPUT,
+            Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_DESTROY_INPUT,
+            Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C,
+            Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT,
+            Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT | Flags.PFFT_DESTROY_INPUT,
+            Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_TRANSPOSED_OUT,
+            ]:
+            test_roundtrip_3d(procmesh, Type.PFFT_R2C, flags, True)
+            test_roundtrip_3d(procmesh, Type.PFFT_R2C, flags, False)
+            test_roundtrip_3d(procmesh, Type.PFFT_C2C, flags, True)
+            test_roundtrip_3d(procmesh, Type.PFFT_C2C, flags, False)
+except Exception as e:
+    print traceback.format_exc()
+    MPI.COMM_WORLD.Abort()
