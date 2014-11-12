@@ -27,9 +27,9 @@
 from mpi4py import MPI
 from sys import path
 import os.path
-path.append(os.path.join(os.path.dirname(__file__), '../src'))
+path.append(os.path.join(os.path.dirname(__file__), '..'))
 import numpy
-from core import *
+from pfft import *
 import traceback
 
 def test_roundtrip_3d(procmesh, type, flags, inplace):
@@ -60,13 +60,12 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
 #    print 'output', output.shape
 #    print 'input', input.shape
     forward = Plan(
-            type, 
-            Nmesh,
+            partition,
+            Direction.PFFT_FORWARD, 
             buf1,
             buf2,
-            procmesh, 
-            direction=Direction.PFFT_FORWARD, 
-            flags=flags)
+            type=type,
+            flags=flags, override_flags=True)
     if procmesh.rank == 0:
         print repr(forward)
 
@@ -97,13 +96,13 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
 
 
     backward = Plan(
-            btype, 
-            Nmesh,
+            partition,
+            Direction.PFFT_BACKWARD, 
             buf2,
             buf1,
-            procmesh, 
-            direction=Direction.PFFT_BACKWARD, 
-            flags=bflags)
+            type=btype, 
+            flags=bflags,
+            override_flags=True)
     if procmesh.rank == 0:
         print repr(backward)
 

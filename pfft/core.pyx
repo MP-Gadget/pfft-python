@@ -320,10 +320,20 @@ cdef class Plan(object):
     cdef readonly object flags
     cdef readonly object type
     cdef readonly object direction
+    cdef readonly int inplace
+    def __init__(self, Partition partition, direction, 
+            LocalBuffer i, LocalBuffer o=None, 
+            type=None, flags=None, override_flags=False):
 
-    def __init__(self, type, n, LocalBuffer i, LocalBuffer o, 
-            ProcMesh procmesh, 
-            direction, flags):
+        if type is None:
+            type = partition.type
+
+        n = partition.n
+        cdef ProcMesh procmesh = partition.procmesh
+        if flags is None:
+            flags = partition.flags
+        if not override_flags:
+            flags |= partition.flags
 
         self.flags = Flags(flags)
         self.type = Type(type)
@@ -331,14 +341,27 @@ cdef class Plan(object):
 
         cdef pfft_plan_func func = PFFT_PLAN_FUNC[self.type]
         cdef numpy.intp_t [::1] n_ = numpy.array(n, dtype='intp')
-
+        if o is None:
+            o = i
+        if &o.buffer[0] == &i.buffer[0]:
+            self.inplace = True
+        else:
+            self.inplace = False
         self.plan = func(n_.shape[0], &n_[0], &i.buffer[0], &o.buffer[0],
                 procmesh.comm_cart,
                 self.direction,
                 flags)
 
-    def execute(self, LocalBuffer i, LocalBuffer o):
+    def execute(self, LocalBuffer i, LocalBuffer o=None):
         cdef pfft_execute_func func = PFFT_EXECUTE_FUNC[self.type]
+        if o is None:
+            o = i
+        if &o.buffer[0] == &i.buffer[0]:
+            inplace = True
+        else:
+            inplace = False
+        if inplace != self.inplace:
+            raise ValueError("inplace status mismatch with the plan")
         func(self.plan, &i.buffer[0], &o.buffer[0])
     def __repr__(self):
         return "Plan(" + \
@@ -346,6 +369,7 @@ cdef class Plan(object):
                 'flags = %s' % repr(self.flags),
                 'type = %s' % repr(self.type),
                 'direction = %s' % repr(self.direction),
+                'inplace = %s' % repr(self.inplace),
                 ]) + ")"
 pfft_init()
 print 'init pfft'

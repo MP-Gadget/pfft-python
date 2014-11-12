@@ -14,15 +14,14 @@ def myext(*args):
         libraries=["fftw3", "fftw3_mpi", "pfft"])
 
 extensions = [
-        myext("pfft.core", ["src/core.pyx"]),
-        myext("pfft.failure", ["src/failure.pyx"]),
+        myext("pfft.core", ["pfft/core.pyx"]),
         ]
 
 setup(
     name="pfft-python", version="0.1",
     author="Yu Feng",
     description="python binding of PFFT, a massively parallel FFT library",
-    package_dir = {'pfft': 'src'},
+    #package_dir = {'pfft': 'pfft'},
     install_requires=['cython', 'numpy'],
     packages= ['pfft'],
     requires=['numpy'],
