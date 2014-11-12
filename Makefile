@@ -2,8 +2,11 @@ MPICC=mpicc -g -O0
 LDSHARED=$(MPICC) -shared
 CFLAGS=-fPIC -I$(PWD)/depends/include
 LDFLAGS=-L$(PWD)/depends/lib
+
 all:
 	LDSHARED="$(LDSHARED)" LDFLAGS="$(LDFLAGS)" CC="$(MPICC)" python setup.py build_ext --inplace
+install:
+	LDSHARED="$(LDSHARED)" LDFLAGS="$(LDFLAGS)" CC="$(MPICC)" python setup.py install --user
 dep-fftw:
 	MPICC="$(MPICC)" CFLAGS="$(CFLAGS)" sh depends/install_fftw.sh $(PWD)/depends/
 dep-pfft:
