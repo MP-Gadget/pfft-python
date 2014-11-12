@@ -1,3 +1,29 @@
+"""
+   this is the standard tests for pfft-python
+
+   Tests are performed on a 3d grid of [29, 30, 31].
+
+   tested features are:
+
+   regular transform (r2c + c2r, c2c)
+   transposed in / out, 
+   padded in / out, 
+   destroy input,
+   inplace transform 
+
+   * for single-rank numpy aggrement test(strict), run with
+
+   [mpirun -np 1] python roundtrip.py
+
+   * for multi-rank roundtrip tests, run with 
+   
+   mpirun -np n python roundtrip.py
+
+   n can be any number. procmeshes tested are:
+   np = [n], [1, n], [n, 1], [a, d], [d, a]
+   where a * d == n and a d are closest to n** 0.5
+   
+"""
 from mpi4py import MPI
 from sys import path
 import os.path
