@@ -11,7 +11,7 @@
    destroy input,
    inplace transform 
 
-   * for single-rank numpy aggrement test(strict), run with
+   * for single-rank numpy aggrement test(single), run with
 
    [mpirun -np 1] python roundtrip.py
 
@@ -34,9 +34,9 @@ import traceback
 
 def test_roundtrip_3d(procmesh, type, flags, inplace):
     if numpy.product(procmesh.np) > 1:
-        strict = False
+        single = False
     else:
-        strict = True
+        single = True
 
     Nmesh = [29, 30, 31]
 #    Nmesh = [2, 3, 2]
@@ -111,13 +111,11 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
     i[:] = numpy.random.normal(size=i.shape)
     original = input.copy()
 
-    if strict:
+    if single:
         if type == Type.PFFT_R2C:
             correct = numpy.fft.rfftn(original)
         elif type == Type.PFFT_C2C:
             correct = numpy.fft.fftn(original)
-        if flags & Flags.PFFT_TRANSPOSED_OUT:
-            correct = correct.transpose(buf1._transpose(numpy.arange(len(Nmesh))))
 
     original *= numpy.product(Nmesh) # fftw vs numpy 
 
@@ -126,7 +124,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
 
     forward.execute(buf1, buf2)
 
-    if strict:
+    if single:
         if False:
             print output.shape
             print correct.shape
@@ -158,9 +156,8 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
             print input
             print i
         MPI.COMM_WORLD.barrier()
-        
 
-    if strict:
+    if single:
         assert (r2cerr < 1e-5)
     assert (c2rerr < 1e-5) 
 
