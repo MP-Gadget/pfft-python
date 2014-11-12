@@ -323,7 +323,7 @@ cdef class Plan(object):
     cdef readonly int inplace
     def __init__(self, Partition partition, direction, 
             LocalBuffer i, LocalBuffer o=None, 
-            type=None, flags=None, override_flags=False):
+            type=None, flags=None):
 
         if type is None:
             type = partition.type
@@ -332,8 +332,6 @@ cdef class Plan(object):
         cdef ProcMesh procmesh = partition.procmesh
         if flags is None:
             flags = partition.flags
-        if not override_flags:
-            flags |= partition.flags
 
         self.flags = Flags(flags)
         self.type = Type(type)

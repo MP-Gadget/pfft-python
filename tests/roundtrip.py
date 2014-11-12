@@ -65,7 +65,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
             buf1,
             buf2,
             type=type,
-            flags=flags, override_flags=True)
+            flags=flags)
     if procmesh.rank == 0:
         print repr(forward)
 
@@ -102,7 +102,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
             buf1,
             type=btype, 
             flags=bflags,
-            override_flags=True)
+            )
     if procmesh.rank == 0:
         print repr(backward)
 

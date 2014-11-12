@@ -15,7 +15,7 @@ buffer = pfft.LocalBuffer(partition)
 plan = pfft.Plan(partition, pfft.Direction.PFFT_FORWARD, buffer)
 iplan = pfft.Plan(partition, pfft.Direction.PFFT_BACKWARD, buffer, 
         flags=pfft.Flags.PFFT_TRANSPOSED_OUT | pfft.Flags.PFFT_DESTROY_INPUT,
-        override_flags=True)
+        )
 
 input = buffer.view_input()
 input[...] = 1.0
