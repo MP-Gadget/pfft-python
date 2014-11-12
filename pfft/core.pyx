@@ -3,6 +3,9 @@ cimport libmpi as MPI
 import numpy
 cimport numpy
 
+####
+#  import those pfft functions
+#####
 cdef extern from 'pfft.h':
     int _PFFT_FORWARD "PFFT_FORWARD"
     int _PFFT_BACKWARD "PFFT_BACKWARD"
@@ -83,6 +86,10 @@ cdef extern from 'pfft.h':
     pfft_complex * pfft_alloc_complex(size_t size)
     void pfft_free(void * ptr)
 
+#######
+#  wrap Flags, Direction
+#####
+
 class Flags(int):
     PFFT_TRANSPOSED_NONE = _PFFT_TRANSPOSED_NONE
     PFFT_TRANSPOSED_IN = _PFFT_TRANSPOSED_IN
@@ -118,6 +125,10 @@ class Direction(int):
         d = self.__class__.__dict__
         return 'and'.join([k for k in d.keys() if k.startswith('PFFT') and (d[k] == self)])
 
+######
+# define Type as the transform type
+# fill in the function tables as well.
+##
 class Type(int):
     PFFT_C2C = 0
     PFFT_R2C = 1
@@ -133,7 +144,6 @@ class Type(int):
 ctypedef numpy.intp_t (*pfft_local_size_func)(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
-
 cdef pfft_local_size_func PFFT_LOCAL_SIZE_FUNC [4]
 
 PFFT_LOCAL_SIZE_FUNC[:] = [
@@ -147,8 +157,8 @@ ctypedef pfft_plan (*pfft_plan_func) (
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
             MPI.MPI_Comm comm_cart,
             int sign, unsigned pfft_flags)
-
 cdef pfft_plan_func PFFT_PLAN_FUNC [4]
+
 PFFT_PLAN_FUNC[:] = [
     pfft_plan_dft,
     pfft_plan_dft_r2c,
@@ -158,6 +168,7 @@ PFFT_PLAN_FUNC[:] = [
 
 ctypedef void (*pfft_execute_func) ( pfft_plan plan, void * input, void * output)
 cdef pfft_execute_func PFFT_EXECUTE_FUNC [4]
+
 PFFT_EXECUTE_FUNC[:] = [
     pfft_execute_dft,
     pfft_execute_dft_r2c,
@@ -169,12 +180,24 @@ cdef class ProcMesh(object):
     cdef MPI.MPI_Comm comm_cart
     cdef readonly numpy.ndarray np
     cdef readonly int rank
-    def __init__(self, np, comm = None):
+    def __init__(self, np, comm=None):
+        """ A mesh of processes 
+            np is the number of processes in each direction.
+
+
+            example:
+                procmesh = ProcMesh([2, 3]) # creates a 2 x 3 mesh.
+
+            product(np) must equal to comm.size
+            
+            For now we only support comm=None (defaults to MPI_COMM_WORLD)
+            because supporting mpi4py comm objects is hard. 
+        """
         cdef MPI.MPI_Comm mpicomm
-        if comm == "world" or comm is None:
+        if comm is None:
             mpicomm = MPI.MPI_COMM_WORLD
         else:
-            raise Exception("hahahah")
+            raise Exception("only COMM_WORLD is supported")
         MPI.MPI_Comm_rank(mpicomm, &self.rank)
         cdef int [::1] np_ = numpy.array(np, 'int32')
         rt = pfft_create_procmesh(np_.shape[0], mpicomm, &np_[0], &self.comm_cart)
@@ -193,6 +216,16 @@ cdef class Partition(object):
     cdef readonly object flags
     cdef readonly ProcMesh procmesh
     def __init__(self, type, n, ProcMesh procmesh, flags):
+        """ A data partition object 
+            type is the type of the transform, r2c, c2r, c2c or r2r see Type.
+            n is the size of the mesh.
+            procmesh is a ProcMesh object
+            flags, see Flags
+
+
+            example:
+                Partition(Type.R2C, [32, 32, 32], procmesh, Flags.PFFT_TRANSPOSED_OUT)
+        """
         self.procmesh = procmesh
         cdef numpy.intp_t[::1] n_ = numpy.array(n, 'intp')
         cdef numpy.intp_t[::1] local_ni
@@ -241,6 +274,24 @@ cdef class Partition(object):
                     'flags = %s' % repr(self.flags),
                     'type = %s' % repr(self.type),
                     ]) + ')'
+    def transpose_shape(self, shape):
+        """ migrate shape to the transposed ordering """
+        assert len(shape) == len(self.n)
+        r = len(self.procmesh.np)
+        n0 = shape[0] 
+        newshape = numpy.copy(shape)
+        newshape[:r] = shape[1:r+1]
+        newshape[r] = n0
+        newshape[r+1:] = shape[r+1:]
+        return newshape
+    def restore_transposed_array(self, array):
+        """ transposed array from the 'transposed ordering' to the ordinary
+        ordering; used by LocalBuffer to return an ordinary looking ndarray"""
+        oldaxes = numpy.arange(len(self.n))
+        newaxes = self.transpose_shape(oldaxes)
+        revert = oldaxes.copy()
+        revert[newaxes] = numpy.arange(len(self.n))
+        return array.transpose(revert)
 
 cdef class LocalBuffer:
     cdef void * ptr
@@ -248,18 +299,13 @@ cdef class LocalBuffer:
     cdef readonly Partition partition
 
     def __init__(self, Partition partition):
+        """ The local portion of the distributed array used by PFFT 
+
+            see the documents of view_input, view_output
+        """
         self.partition = partition
         self.ptr = pfft_alloc_complex(partition.alloc_local)
         self.buffer = <double [:partition.alloc_local * 2:1]> self.ptr
-
-    def _transpose(self, shape):
-        r = len(self.partition.procmesh.np)
-        n0 = shape[0] 
-        newshape = shape.copy()
-        newshape[:r] = shape[1:r+1]
-        newshape[r] = n0
-        newshape[r+1:] = shape[r+1:]
-        return newshape
 
     def _view(self, dtype, local_n, local_start, roll, padded):
         shape = local_n.copy()
@@ -283,17 +329,26 @@ cdef class LocalBuffer:
                 print shape, shape2
         if roll:
             #shift = len(self.partition.procmesh.np) - len(self.partition.n)
-            shape = self._transpose(shape)
-            shape2 = self._transpose(shape2)
+            shape = self.partition.transpose_shape(shape)
+            shape2 = self.partition.transpose_shape(shape2)
 
         sel = [slice(0, s) for s in shape2]
         a = a[:numpy.product(shape)]
         a = a.reshape(shape)
         a = a[sel]
         #print <numpy.intp_t> a.data, <numpy.intp_t> self.ptr
+        if roll:
+            a = self.partition.restore_transposed_array(a)
         return a
 
     def view_input(self):
+        """ return the buffer as a numpy array, the dtype and shape
+            are for the input of the transform
+
+            padding is opaque; the returned array has removed the padding column.
+            PFFT_TRANSPOSED_IN does not affect the ordering of the axes in
+            the returned array. (this is achieved via numpy.transpose)
+        """
         dtypes = ['complex128', 'float64', 'complex128', 'float64']
         return self._view(dtypes[self.partition.type],
                 self.partition.local_ni,
@@ -303,6 +358,13 @@ cdef class LocalBuffer:
                 )
 
     def view_output(self):
+        """ return the buffer as a numpy array, the dtype and shape
+            are for the output of the transform
+
+            padding is opaque; the returned array has removed the padding column.
+            PFFT_TRANSPOSED_OUT does not affect the ordering of the axes in
+            the returned array. (this is achieved via numpy.transpose)
+        """
         dtypes = ['complex128', 'complex128', 'float64', 'float64']
         return self._view(dtypes[self.partition.type],
                 self.partition.local_no,
@@ -324,7 +386,14 @@ cdef class Plan(object):
     def __init__(self, Partition partition, direction, 
             LocalBuffer i, LocalBuffer o=None, 
             type=None, flags=None):
+        """ initialize a Plan.
+            o defaults to i
+            type defaults to parititon.type
+            flags defaults to partition.flags
 
+            example:
+                plan = Plan(partition, Direction.PFFT_FORWARD, buf1, buf2)
+        """
         if type is None:
             type = partition.type
 
@@ -351,6 +420,10 @@ cdef class Plan(object):
                 flags)
 
     def execute(self, LocalBuffer i, LocalBuffer o=None):
+        """ execute a plan.
+            o and i must match the alignment (unchecked), 
+            inplace status of the plan.
+        """
         cdef pfft_execute_func func = PFFT_EXECUTE_FUNC[self.type]
         if o is None:
             o = i
