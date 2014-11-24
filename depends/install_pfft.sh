@@ -19,8 +19,8 @@ if [ -d $TMP ]; then
 fi
 
 mkdir $TMP 
-
-gzip -dc depends/pfft-$PFFT_VERSION.tar.gz | tar xvf - -C $TMP
+ROOT=`dirname $0`/../
+gzip -dc $ROOT/depends/pfft-$PFFT_VERSION.tar.gz | tar xvf - -C $TMP
 cd $TMP
 
 cd pfft-$PFFT_VERSION
