@@ -8,12 +8,12 @@ import mpi4py
 
 package_basedir = os.path.abspath(os.path.dirname(__file__))
 dependsdir = os.path.join(package_basedir, 'depends')
-compiler=mpi4py.get_config()['mpicc']
-
+compiler = mpi4py.get_config()['mpicc']
+compiler += ' -O0 -g'
 # how otherwise do I set the compiler cython uses?
 os.environ['CC'] = compiler
 os.environ['LDSHARED'] = compiler + " -shared"
-
+print mpi4py.get_include()
 def build_fftw():
     line = ('CFLAGS="-fPIC -I%s/include" ' % dependsdir +
             'LDFLAGS="-L%s/lib" ' % dependsdir +
@@ -45,7 +45,7 @@ def build_pfft():
 
 def myext(*args):
     return Extension(*args, 
-        compiler=mpi4py.get_config()['mpicc'],
+        compiler=compiler,
         include_dirs=["./", 
         os.path.join(dependsdir, 'include'),
         mpi4py.get_include(),
@@ -71,6 +71,6 @@ setup(
     packages= ['pfft'],
     requires=['numpy'],
     ext_modules = cythonize(extensions,
-        include_path=[mpi4py.get_include()])
+        include_path=[mpi4py.get_include()]),
 )
 

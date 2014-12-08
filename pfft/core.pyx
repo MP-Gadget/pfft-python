@@ -3,6 +3,7 @@ cimport libmpi as MPI
 import numpy
 cimport numpy
 
+numpy.import_array()
 ####
 #  import those pfft functions
 #####
@@ -305,7 +306,9 @@ cdef class LocalBuffer:
         """
         self.partition = partition
         self.ptr = pfft_alloc_complex(partition.alloc_local)
-        self.buffer = <double [:partition.alloc_local * 2:1]> self.ptr
+        cdef numpy.intp_t shape[1]
+        shape[0] = partition.alloc_local * 2
+        self.buffer = numpy.PyArray_SimpleNewFromData(1, shape, numpy.NPY_DOUBLE, self.ptr)
 
     def _view(self, dtype, local_n, local_start, roll, padded):
         shape = local_n.copy()
