@@ -25,29 +25,34 @@
    
 """
 from mpi4py import MPI
-from sys import path
-import os.path
-path.append(os.path.join(os.path.dirname(__file__), '..'))
-import numpy
-from pfft import *
+import itertools
 import traceback
+import numpy
 
-def test_roundtrip_3d(procmesh, type, flags, inplace):
+import os.path
+from sys import path
+# prefers to use the locally built pfft in source tree, in case there is an
+# installation
+path.insert(os.path.join(os.path.dirname(__file__), '..'), 0)
+
+from pfft import *
+
+class LargeError(Exception):
+    pass
+
+def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     if numpy.product(procmesh.np) > 1:
         single = False
     else:
         single = True
 
-    Nmesh = [29, 30, 31]
-#    Nmesh = [2, 3, 2]
-    
     partition = Partition(type, Nmesh, procmesh, flags)
     for rank in range(MPI.COMM_WORLD.size):
         MPI.COMM_WORLD.barrier()
         if rank != procmesh.rank:
             continue
-        print procmesh.rank, 'roundtrip test, np=', procmesh.np, 'Nmesh = ', Nmesh, 'inplace = ', inplace
-        print repr(partition)
+        #print procmesh.rank, 'roundtrip test, np=', procmesh.np, 'Nmesh = ', Nmesh, 'inplace = ', inplace
+        #print repr(partition)
 
     buf1 = LocalBuffer(partition)
     if inplace:
@@ -67,7 +72,8 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
             type=type,
             flags=flags)
     if procmesh.rank == 0:
-        print repr(forward)
+        #print repr(forward)
+        pass
 
     # find the inverse plan
     if type == Type.PFFT_R2C:
@@ -104,8 +110,8 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
             flags=bflags,
             )
     if procmesh.rank == 0:
-        print repr(backward)
-
+        #print repr(backward)
+        pass
     i = numpy.array(buf1.buffer, copy=False)
     numpy.random.seed(9999)
     i[:] = numpy.random.normal(size=i.shape)
@@ -118,11 +124,15 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
             correct = numpy.fft.fftn(original)
 
     original *= numpy.product(Nmesh) # fftw vs numpy 
+    i = i.copy() * numpy.product(Nmesh)
 
     if not inplace:
         output[:] = 0
 
     forward.execute(buf1, buf2)
+
+    o = numpy.array(buf2.buffer, copy=True)
+    ocpy = output.copy()
 
     if single:
         if False:
@@ -133,13 +143,15 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
             print i
 
         r2cerr = numpy.abs(output - correct).std(dtype='f8')
-        print repr(forward.type), "error = ", r2cerr
+        #print repr(forward.type), "error = ", r2cerr
         i[:] = 0
         output[:] = correct
 
     if not inplace:
         input[:] = 0
     backward.execute(buf2, buf1)
+
+    i2 = numpy.array(buf1.buffer, copy=True)
 
     if input.size > 0:
         c2rerr = numpy.abs(original - input).std(dtype='f8')
@@ -150,16 +162,22 @@ def test_roundtrip_3d(procmesh, type, flags, inplace):
         MPI.COMM_WORLD.barrier()
         if rank != procmesh.rank:
             continue
-        print rank, repr(backward.type), "error = ", c2rerr
+        #print rank, repr(backward.type), "error = ", c2rerr
         if False:
-            print original
+            print ocpy
+            print o
+            print original 
             print input
-            print i
+            print i2
+            print i / numpy.product(Nmesh)
         MPI.COMM_WORLD.barrier()
 
     if single:
-        assert (r2cerr < 1e-5)
-    assert (c2rerr < 1e-5) 
+        if (r2cerr > 1e-5):
+            raise LargeError("r2c: %g" % r2cerr)
+    c2rerr = MPI.COMM_WORLD.allreduce(c2rerr, op=MPI.SUM)
+    if (c2rerr > 1e-5):
+        raise LargeError("c2r: %g" % c2rerr)
 
 if MPI.COMM_WORLD.size == 1: 
     nplist = [
@@ -186,20 +204,36 @@ else:
             ]
 
 try:
-    for np in nplist:
-        procmesh = ProcMesh(np)
-        for flags in [
+    flags = [
             Flags.PFFT_ESTIMATE | Flags.PFFT_DESTROY_INPUT,
             Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_DESTROY_INPUT,
             Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C,
             Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT,
             Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT | Flags.PFFT_DESTROY_INPUT,
             Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_TRANSPOSED_OUT,
-            ]:
-            test_roundtrip_3d(procmesh, Type.PFFT_R2C, flags, True)
-            test_roundtrip_3d(procmesh, Type.PFFT_R2C, flags, False)
-            test_roundtrip_3d(procmesh, Type.PFFT_C2C, flags, True)
-            test_roundtrip_3d(procmesh, Type.PFFT_C2C, flags, False)
+            ]
+    params = list(itertools.product(
+            nplist, [Type.PFFT_C2C, Type.PFFT_R2C], flags, [True, False],
+            [[29, 30, 31], [30, 31, 32], [32, 32, 32]]
+            ))
+
+    PASS = []
+    FAIL = []
+    for param in params:
+        np = param[0]
+        procmesh = ProcMesh(np)
+        try:
+            test_roundtrip_3d(procmesh, *(param[1:]))
+            PASS.append(param)
+        except LargeError as e:
+            FAIL.append(param)
+    if MPI.COMM_WORLD.rank == 0:
+        print "PASS", len(PASS), '/', len(params)
+        for f in PASS:
+            print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4]
+        print "FAIL", len(FAIL), '/', len(params)
+        for f in FAIL:
+            print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4]
 except Exception as e:
     print traceback.format_exc()
     MPI.COMM_WORLD.Abort()

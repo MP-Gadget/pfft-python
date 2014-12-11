@@ -329,7 +329,7 @@ cdef class LocalBuffer:
                     # cut it such that the array shape looks correct (padding is
                     # hidden from user)
                     shape2[-1] = self.partition.n[-1] - local_start[-1]
-                print shape, shape2
+                #print shape, shape2
         if roll:
             #shift = len(self.partition.procmesh.np) - len(self.partition.n)
             shape = self.partition.transpose_shape(shape)
@@ -446,4 +446,4 @@ cdef class Plan(object):
                 'inplace = %s' % repr(self.inplace),
                 ]) + ")"
 pfft_init()
-print 'init pfft'
+#print 'init pfft'
