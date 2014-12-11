@@ -238,7 +238,7 @@ cdef class Partition(object):
                 numpy.empty((4, n_.shape[0]), 'intp')
 
         if len(n_) <= len(procmesh.np):
-            raise ValueError("ProcMesh (%d) shall have less dimentions than Mesh (%d)" % (len(procmesh.np), n_))
+            raise ValueError("ProcMesh (%d) shall have less dimentions than Mesh (%d)" % (len(procmesh.np), len(n_)))
 
         self.type = Type(type)
         self.flags = Flags(flags)
