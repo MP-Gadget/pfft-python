@@ -12,7 +12,7 @@ compiler = mpi4py.get_config()['mpicc']
 compiler += ' -O0 -g'
 # how otherwise do I set the compiler cython uses?
 os.environ['CC'] = compiler
-os.environ['LDSHARED'] = compiler + " -shared -dynamic"
+os.environ['LDSHARED'] = compiler + " -shared"
 print mpi4py.get_include()
 def build_fftw():
     line = ('CFLAGS="-fPIC -fvisibility=hidden -I%s/include" ' % dependsdir +
