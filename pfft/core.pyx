@@ -205,7 +205,9 @@ cdef class ProcMesh(object):
         if rt != 0:
             raise Exception("failed to create proc mesh")
         self.np = numpy.array(np_)
-        
+    def __dealloc__(self):
+        MPI.MPI_Comm_free(&self.comm_cart)
+
 cdef class Partition(object):
     cdef readonly size_t alloc_local
     cdef readonly numpy.ndarray n
