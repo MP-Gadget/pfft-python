@@ -1,28 +1,25 @@
 """
-   this is the standard tests for pfft-python
+   This is the standard tests for pfft-python.
 
-   Tests are performed on a 3d grid of [29, 30, 31].
+   Roundtrip (Backward + Forward) tests are performed on a 3d grid,
+   given by -Nmesh. Default is [29, 30, 31].
+   Tested features are:
+       regular transform (r2c + c2r, c2c)
+       transposed in / out, 
+       padded in / out, 
+       destroy input,
+       inplace transform 
 
-   tested features are:
+   Examples:
+   * for single-rank numpy agreement test, run with
+       mpirun -np 1 python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 -tree -verbose
 
-   regular transform (r2c + c2r, c2c)
-   transposed in / out, 
-   padded in / out, 
-   destroy input,
-   inplace transform 
-
-   * for single-rank numpy aggrement test(single), run with
-
-   [mpirun -np 1] python roundtrip.py
-
-   * for multi-rank roundtrip tests, run with 
-   
-   mpirun -np n python roundtrip.py
+   * for multi-rank tests, run with 
+       mpirun -np n python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 -tree -verbose
 
    n can be any number. procmeshes tested are:
-   np = [n], [1, n], [n, 1], [a, d], [d, a]
-   where a * d == n and a d are closest to n** 0.5
-   
+       np = [n], [1, n], [n, 1], [a, d], [d, a]
+    where a * d == n and a d are closest to n** 0.5
 """
 from mpi4py import MPI
 import itertools
@@ -32,18 +29,36 @@ import argparse
 
 import os.path
 from sys import path
-# prefers to use the locally built pfft in source tree, in case there is an
-# installation
-path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+parser = argparse.ArgumentParser(description='Roundtrip testing of pfft', 
+        epilog=__doc__,
+       formatter_class=argparse.RawDescriptionHelpFormatter 
+        )
+
+parser.add_argument('-Nmesh', nargs=3, type=int,
+        action='append', metavar=('Nx', 'Ny', 'Nz'), 
+        help='size of FFT mesh, default is 29 30 31',
+        default=[])
+parser.add_argument('-tree', action='store_true', default=False,
+        help='Use pfft from source tree, ' +
+        'built with setup.py build_ext --inplace')
+parser.add_argument('-diag', action='store_true', default=False,
+        help='show which one failed and which one passed')
+parser.add_argument('-verbose', action='store_true', default=False,
+        help='print which test will be ran')
+
+ns = parser.parse_args()
+Nmesh = ns.Nmesh
+if len(Nmesh) == 0:
+    # default 
+    Nmesh = [[29, 30, 31]]
+if ns.tree:
+    # prefers to use the locally built pfft in source tree, in case there is an
+    # installation
+    path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from pfft import *
 
-parser = argparse.ArgumentParser()
-
-parser.add_argument('-Nmesh', dest='Nmesh', nargs=3, type=int, action='append')
-ns = parser.parse_args()
-
-print ns.Nmesh
 class LargeError(Exception):
     pass
 
@@ -221,12 +236,16 @@ try:
             ]
     params = list(itertools.product(
             nplist, [Type.PFFT_C2C, Type.PFFT_R2C], flags, [True, False],
-            [[29, 30, 31], [30, 31, 32], [32, 32, 32]]
+            Nmesh,
             ))
 
     PASS = []
     FAIL = []
     for param in params:
+        if MPI.COMM_WORLD.rank == 0:
+            if ns.verbose:
+                f = param
+                print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4]
         np = param[0]
         procmesh = ProcMesh(np)
         try:
@@ -234,13 +253,16 @@ try:
             PASS.append(param)
         except LargeError as e:
             FAIL.append(param)
+
     if MPI.COMM_WORLD.rank == 0:
         print "PASS", len(PASS), '/', len(params)
-        for f in PASS:
-            print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4]
+        if ns.diag:
+            for f in PASS:
+                print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4]
         print "FAIL", len(FAIL), '/', len(params)
-        for f in FAIL:
-            print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4]
+        if ns.diag:
+            for f in FAIL:
+                print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4]
 except Exception as e:
     print traceback.format_exc()
     MPI.COMM_WORLD.Abort()
