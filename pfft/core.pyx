@@ -148,10 +148,10 @@ ctypedef numpy.intp_t (*pfft_local_size_func)(int rnk_n, numpy.intp_t * n, MPI.M
 cdef pfft_local_size_func PFFT_LOCAL_SIZE_FUNC [4]
 
 PFFT_LOCAL_SIZE_FUNC[:] = [
-    pfft_local_size_dft,
-    pfft_local_size_dft_r2c,
-    pfft_local_size_dft_c2r,
-    pfft_local_size_r2r
+    <pfft_local_size_func> pfft_local_size_dft,
+    <pfft_local_size_func> pfft_local_size_dft_r2c,
+    <pfft_local_size_func> pfft_local_size_dft_c2r,
+    <pfft_local_size_func> pfft_local_size_r2r
         ]
 
 ctypedef pfft_plan (*pfft_plan_func) (
@@ -161,20 +161,20 @@ ctypedef pfft_plan (*pfft_plan_func) (
 cdef pfft_plan_func PFFT_PLAN_FUNC [4]
 
 PFFT_PLAN_FUNC[:] = [
-    pfft_plan_dft,
-    pfft_plan_dft_r2c,
-    pfft_plan_dft_c2r,
-    pfft_plan_r2r
+    <pfft_plan_func> pfft_plan_dft,
+    <pfft_plan_func> pfft_plan_dft_r2c,
+    <pfft_plan_func> pfft_plan_dft_c2r,
+    <pfft_plan_func> pfft_plan_r2r
         ]
 
 ctypedef void (*pfft_execute_func) ( pfft_plan plan, void * input, void * output)
 cdef pfft_execute_func PFFT_EXECUTE_FUNC [4]
 
 PFFT_EXECUTE_FUNC[:] = [
-    pfft_execute_dft,
-    pfft_execute_dft_r2c,
-    pfft_execute_dft_c2r,
-    pfft_execute_r2r
+    <pfft_execute_func> pfft_execute_dft,
+    <pfft_execute_func> pfft_execute_dft_r2c,
+    <pfft_execute_func> pfft_execute_dft_c2r,
+    <pfft_execute_func> pfft_execute_r2r
         ]
 
 cdef class ProcMesh(object):
