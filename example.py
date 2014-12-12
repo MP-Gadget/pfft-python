@@ -12,14 +12,22 @@ Consequently, calls to plan.execute we also provide only a single buffer object.
 """
 
 
-procmesh = pfft.ProcMesh([4])
-
+procmesh = pfft.ProcMesh([4], comm=MPI.COMM_WORLD)
 partition = pfft.Partition(
         pfft.Type.PFFT_C2C, 
         [8, 8], 
         procmesh, 
         pfft.Flags.PFFT_TRANSPOSED_OUT | pfft.Flags.PFFT_DESTROY_INPUT
         )
+for irank  in range(4):
+    MPI.COMM_WORLD.barrier()
+    if irank != procmesh.rank:
+        continue
+    print 'My rank is', procmesh.this
+    print 'local_i_start', partition.local_i_start
+    print 'local_o_start', partition.local_o_start
+    print 'i_edges', partition.i_edges
+    print 'o_edges', partition.o_edges
 
 buffer = pfft.LocalBuffer(partition)
 

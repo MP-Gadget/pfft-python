@@ -1,8 +1,10 @@
 #from mpi4py cimport MPI
+from mpi4py import MPI as pyMPI
 cimport libmpi as MPI
 import numpy
 cimport numpy
-
+from libc.stdlib cimport free, calloc
+from libc.string cimport memset
 numpy.import_array()
 ####
 #  import those pfft functions
@@ -179,8 +181,12 @@ PFFT_EXECUTE_FUNC[:] = [
 
 cdef class ProcMesh(object):
     cdef MPI.MPI_Comm comm_cart
+    cdef readonly numpy.ndarray this # nd rank of the current process
     cdef readonly numpy.ndarray np
     cdef readonly int rank
+    cdef readonly int Ndim
+    cdef MPI.MPI_Comm * comm_col
+
     def __init__(self, np, comm=None):
         """ A mesh of processes 
             np is the number of processes in each direction.
@@ -191,25 +197,69 @@ cdef class ProcMesh(object):
 
             product(np) must equal to comm.size
             
-            For now we only support comm=None (defaults to MPI_COMM_WORLD)
-            because supporting mpi4py comm objects is hard. 
+            if the mpi4py version is recent (MPI._addressof), comm can
+            be any mpi4py Comm objects.
         """
         cdef MPI.MPI_Comm mpicomm
+        self.comm_col = NULL
+        self.comm_cart = NULL
+
         if comm is None:
             mpicomm = MPI.MPI_COMM_WORLD
         else:
-            raise Exception("only COMM_WORLD is supported")
+            if isinstance(comm, pyMPI.Comm):
+                if hasattr(pyMPI, '_addressof'):
+                    mpicomm = (<MPI.MPI_Comm*> (<numpy.intp_t>
+                            pyMPI._addressof(comm))) [0]
+                else:
+                    raise ValueError("only comm=None is supported, "
+                            + " update mpi4py to a version with MPI._addressof")
+            else:
+                raise ValueError("only MPI.Comm objects are supported")
+
         MPI.MPI_Comm_rank(mpicomm, &self.rank)
         cdef int [::1] np_ = numpy.array(np, 'int32')
         rt = pfft_create_procmesh(np_.shape[0], mpicomm, &np_[0], &self.comm_cart)
+
         if rt != 0:
-            raise Exception("failed to create proc mesh")
+            self.comm_cart = NULL
+            raise RuntimeError("Failed to create proc mesh")
+
         self.np = numpy.array(np_)
+        self.Ndim = len(self.np)
+
+        # a buffer used for various purposes 
+        cdef int[::1] junk = numpy.empty(self.Ndim, 'int32')
+
+        # now fill `this'
+        self.this = numpy.array(np, 'int32')
+        MPI.MPI_Cart_get(self.comm_cart, 2, 
+                &junk[0], &junk[0],
+                <int*>self.this.data);
+
+        # build the comm_col sub communicators
+        self.comm_col = <MPI.MPI_Comm*>calloc(self.Ndim, sizeof(MPI.MPI_Comm))
+        for i in range(self.Ndim):
+            junk[:] = 0
+            junk[i] = 1
+            if MPI.MPI_SUCCESS != MPI.MPI_Cart_sub(self.comm_cart, &junk[0],
+                    &self.comm_col[i]):
+                self.comm_col[i] = NULL
+                raise RuntimeError("Failed to create sub communicators")
+
     def __dealloc__(self):
-        MPI.MPI_Comm_free(&self.comm_cart)
+        if self.comm_cart:
+            MPI.MPI_Comm_free(&self.comm_cart)
+            pass
+        if self.comm_col != NULL:
+            for i in range(self.Ndim):
+                if self.comm_col[i]:
+                    MPI.MPI_Comm_free(&self.comm_col[i])
+            free(self.comm_col)
 
 cdef class Partition(object):
     cdef readonly size_t alloc_local
+    cdef readonly int Ndim
     cdef readonly numpy.ndarray n
     cdef readonly numpy.ndarray local_ni
     cdef readonly numpy.ndarray local_i_start
@@ -218,6 +268,8 @@ cdef class Partition(object):
     cdef readonly object type
     cdef readonly object flags
     cdef readonly ProcMesh procmesh
+    cdef readonly object i_edges
+    cdef readonly object o_edges
     def __init__(self, type, n, ProcMesh procmesh, flags):
         """ A data partition object 
             type is the type of the transform, r2c, c2r, c2c or r2r see Type.
@@ -225,8 +277,17 @@ cdef class Partition(object):
             procmesh is a ProcMesh object
             flags, see Flags
 
+            i_edges: the edges of the input mesh. This is identical on all
+                     ranks. Notice that if the input is PFFT_TRANSPOSED_IN the edges
+                     remain the ordering of the original array. The mapping to
+                     the procmesh is somewhat complicated:
+                         (I will write this when I figure it out)
+            o_edges: the edges of the output mesh. similar to i_edges
 
-            example:
+            local_i_start: the start offset.
+            local_o_start: the start offset.
+
+            Example:
                 Partition(Type.R2C, [32, 32, 32], procmesh, Flags.PFFT_TRANSPOSED_OUT)
         """
         self.procmesh = procmesh
@@ -258,14 +319,46 @@ cdef class Partition(object):
                 &local_o_start[0])
 
         if rt <= 0:
-            raise Exception("failed local size")
-        self.alloc_local = rt
+            raise RuntimeError("failed local size")
 
+        self.alloc_local = rt
         self.local_ni = numpy.array(local_ni)
         self.local_no = numpy.array(local_no)
         self.local_i_start = numpy.array(local_i_start)
         self.local_o_start = numpy.array(local_o_start)
         self.n = numpy.array(n_)
+        self.Ndim = len(self.n)
+
+        self.i_edges = self._build_edges(self.local_i_start,
+                self.flags & Flags.PFFT_TRANSPOSED_IN 
+                )
+        self.o_edges = self._build_edges(self.local_o_start,
+                self.flags & Flags.PFFT_TRANSPOSED_OUT
+                )
+
+    def _build_edges(self, numpy.intp_t[::1] local_start, transposed):
+        cdef numpy.intp_t[::1] start_dim
+        cdef numpy.intp_t tmp
+        edges = []
+        cdef int d
+        np = numpy.ones(self.Ndim, dtype='int')
+        np[:self.procmesh.Ndim] = self.procmesh.np
+        for d in range(self.Ndim):
+            if transposed:
+                d1 = self.transpose_d(d)
+            else:
+                d1 = d
+            start_dim = numpy.empty((np[d1] + 1), dtype='intp')
+            start_dim[0] = 0
+            start_dim[np[d1]] = self.n[d1]
+            if d1 < self.procmesh.Ndim:
+                tmp = local_start[d]
+                MPI.MPI_Allgather(&tmp, sizeof(numpy.intp_t), MPI.MPI_BYTE, 
+                        &start_dim[0], sizeof(numpy.intp_t), MPI.MPI_BYTE, 
+                        self.procmesh.comm_col[d1])
+            edges.append(numpy.array(start_dim))
+        return edges
+
     def __repr__(self):
         return 'Partition(' + \
                 ','.join([
@@ -277,6 +370,23 @@ cdef class Partition(object):
                     'flags = %s' % repr(self.flags),
                     'type = %s' % repr(self.type),
                     ]) + ')'
+                
+    def transpose_d(self, d):
+        r = len(self.procmesh.np)
+        if d >= 1 and d < r + 1:
+            return d - 1
+        if d == 0:
+            return r
+        return d
+    def transpose_list(self, list):
+        """ migrate shape to the transposed ordering """
+        assert len(list) == len(self.n)
+        r = len(self.procmesh.np)
+        n0 = list[0] 
+        newlist = list[1:r+1]
+        newlist.append(n0)
+        newlist += list[r+1:]
+        return newlist
     def transpose_shape(self, shape):
         """ migrate shape to the transposed ordering """
         assert len(shape) == len(self.n)
@@ -361,7 +471,6 @@ cdef class LocalBuffer:
                 self.partition.flags & Flags.PFFT_TRANSPOSED_IN, 
                 self.partition.flags & Flags.PFFT_PADDED_R2C, 
                 )
-
     def view_output(self):
         """ return the buffer as a numpy array, the dtype and shape
             are for the output of the transform
