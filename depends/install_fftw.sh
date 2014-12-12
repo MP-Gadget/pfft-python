@@ -344,7 +344,7 @@ diff -rupN fftw-3.3.3/mpi/transpose-alltoall-transposed.c fftw-3.3.3-patched/mpi
 diff -rupN fftw-3.3.3/mpi/transpose-pairwise-transposed.c fftw-3.3.3-patched/mpi/transpose-pairwise-transposed.c
 --- fftw-3.3.3/mpi/transpose-pairwise-transposed.c	1970-01-01 01:00:00.000000000 +0100
 +++ fftw-3.3.3-patched/mpi/transpose-pairwise-transposed.c	2013-03-28 13:49:35.000000000 +0100
-@@ -0,0 +1,511 @@
+@@ -0,0 +1,510 @@
 +/*
 + * Copyright (c) 2003, 2007-11 Matteo Frigo
 + * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
@@ -401,7 +401,6 @@ diff -rupN fftw-3.3.3/mpi/transpose-pairwise-transposed.c fftw-3.3.3-patched/mpi
 +{
 +     if (sched) {
 +	  int i;
-+	  MPI_Status status;
 +
 +	  /* TODO: explore non-synchronous send/recv? */
 +
@@ -422,7 +421,7 @@ diff -rupN fftw-3.3.3/mpi/transpose-pairwise-transposed.c fftw-3.3.3-patched/mpi
 +				      O + rbo[pe], (int) (rbs[pe]),
 +				      FFTW_MPI_TYPE,
 +				      pe, (pe * n_pes + my_pe) & 0xffff,
-+				      comm, &status);
++				      comm, MPI_STATUS_IGNORE);
 +		    }
 +	       }
 +
@@ -440,7 +439,7 @@ diff -rupN fftw-3.3.3/mpi/transpose-pairwise-transposed.c fftw-3.3.3-patched/mpi
 +				      O + rbo[pe], (int) (rbs[pe]),
 +				      FFTW_MPI_TYPE,
 +				      pe, (pe * n_pes + my_pe) & 0xffff,
-+				      comm, &status);
++				      comm, MPI_STATUS_IGNORE);
 +	       }
 +	  }
 +     }
@@ -859,13 +858,40 @@ diff -rupN fftw-3.3.3/mpi/transpose-pairwise-transposed.c fftw-3.3.3-patched/mpi
 diff -rupN fftw-3.3.3/mpi/transpose-pairwise.c fftw-3.3.3-patched/mpi/transpose-pairwise.c
 --- fftw-3.3.3/mpi/transpose-pairwise.c	2013-03-28 13:52:19.000000000 +0100
 +++ fftw-3.3.3-patched/mpi/transpose-pairwise.c	2013-03-28 13:49:08.000000000 +0100
-@@ -350,6 +350,7 @@ nada:
+@@ -53,7 +53,6 @@ static void transpose_chunks(int *sched,
+ {
+      if (sched) {
+ 	  int i;
+-	  MPI_Status status;
+ 
+ 	  /* TODO: explore non-synchronous send/recv? */
+ 
+@@ -74,7 +73,7 @@ static void transpose_chunks(int *sched,
+ 				      O + rbo[pe], (int) (rbs[pe]),
+ 				      FFTW_MPI_TYPE,
+ 				      pe, (pe * n_pes + my_pe) & 0xffff,
+-				      comm, &status);
++				      comm, MPI_STATUS_IGNORE);
+ 		    }
+ 	       }
+ 
+@@ -92,7 +91,7 @@ static void transpose_chunks(int *sched,
+ 				      O + rbo[pe], (int) (rbs[pe]),
+ 				      FFTW_MPI_TYPE,
+ 				      pe, (pe * n_pes + my_pe) & 0xffff,
+-				      comm, &status);
++				      comm, MPI_STATUS_IGNORE);
+ 	       }
+ 	  }
+      }
+@@ -350,6 +349,7 @@ nada:
       X(plan_destroy_internal)(*cld3);
       X(plan_destroy_internal)(*cld2rest);
       X(plan_destroy_internal)(*cld2);
 +     *cld2 = *cld2rest = *cld3 = NULL;
       return 0;
  }
+ 
 EOF
  
 
