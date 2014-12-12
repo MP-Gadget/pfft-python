@@ -28,15 +28,22 @@ from mpi4py import MPI
 import itertools
 import traceback
 import numpy
+import argparse
 
 import os.path
 from sys import path
 # prefers to use the locally built pfft in source tree, in case there is an
 # installation
-path.insert(os.path.join(os.path.dirname(__file__), '..'), 0)
+path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from pfft import *
 
+parser = argparse.ArgumentParser()
+
+parser.add_argument('-Nmesh', dest='Nmesh', nargs=3, type=int, action='append')
+ns = parser.parse_args()
+
+print ns.Nmesh
 class LargeError(Exception):
     pass
 
