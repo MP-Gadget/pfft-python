@@ -65,6 +65,7 @@ build_pfft()
 setup(
     name="pfft-python", version="0.1",
     author="Yu Feng",
+    author_email="rainwoodman@gmail.com",
     description="python binding of PFFT, a massively parallel FFT library",
     #package_dir = {'pfft': 'pfft'},
     install_requires=['cython', 'numpy'],

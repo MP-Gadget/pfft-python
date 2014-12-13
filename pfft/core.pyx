@@ -1,4 +1,11 @@
-#from mpi4py cimport MPI
+"""
+    pfft-python: python binding of PFFT.
+
+    Author: Yu Feng (yfeng1@berkeley.edu), 
+          University of California Berkeley (2014)
+
+"""
+
 from mpi4py import MPI as pyMPI
 cimport libmpi as MPI
 import numpy
@@ -6,6 +13,7 @@ cimport numpy
 from libc.stdlib cimport free, calloc
 from libc.string cimport memset
 numpy.import_array()
+
 ####
 #  import those pfft functions
 #####
@@ -477,6 +485,9 @@ cdef class LocalBuffer:
             padding is opaque; the returned array has removed the padding column.
             PFFT_TRANSPOSED_IN does not affect the ordering of the axes in
             the returned array. (this is achieved via numpy.transpose)
+
+            The base attribute of the returned array points back to the LocalBuffer
+            object.
         """
         dtypes = ['complex128', 'float64', 'complex128', 'float64']
         return self._view(dtypes[self.partition.type],
@@ -492,6 +503,9 @@ cdef class LocalBuffer:
             padding is opaque; the returned array has removed the padding column.
             PFFT_TRANSPOSED_OUT does not affect the ordering of the axes in
             the returned array. (this is achieved via numpy.transpose)
+
+            The base attribute of the returned array points back to the LocalBuffer
+            object.
         """
         dtypes = ['complex128', 'complex128', 'float64', 'float64']
         return self._view(dtypes[self.partition.type],
