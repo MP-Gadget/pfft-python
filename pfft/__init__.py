@@ -7,6 +7,7 @@ def split_size_2d(s):
         returns:  a, d
     """
     a = int(s** 0.5) + 1
+    d = s
     while a > 1:
         if s % a == 0:
             d = s // a

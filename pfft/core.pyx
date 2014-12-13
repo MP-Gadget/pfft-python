@@ -408,7 +408,14 @@ cdef class Partition(object):
 
 cdef class LocalBuffer:
     cdef void * ptr
-    cdef readonly double [::1] buffer
+    property buffer:
+        def __get__(self):
+            cdef numpy.intp_t shape[1]
+            shape[0] = self.partition.alloc_local * 2
+            cdef numpy.ndarray buffer = numpy.PyArray_SimpleNewFromData(1, shape, numpy.NPY_DOUBLE, self.ptr)
+            numpy.set_array_base(buffer, self)
+            return buffer
+
     cdef readonly Partition partition
 
     def __init__(self, Partition partition):
@@ -418,14 +425,12 @@ cdef class LocalBuffer:
         """
         self.partition = partition
         self.ptr = pfft_alloc_complex(partition.alloc_local)
-        cdef numpy.intp_t shape[1]
-        shape[0] = partition.alloc_local * 2
-        self.buffer = numpy.PyArray_SimpleNewFromData(1, shape, numpy.NPY_DOUBLE, self.ptr)
 
     def _view(self, dtype, local_n, local_start, roll, padded):
-        shape = local_n.copy()
 
         cdef numpy.ndarray a = numpy.array(self.buffer, copy=False)
+
+        shape = local_n.copy()
         a = a.view(dtype=dtype)
         if numpy.iscomplexobj(a):
             # complex array needs no padding
@@ -488,7 +493,6 @@ cdef class LocalBuffer:
                 )
 
     def __dealloc__(self):
-        self.buffer = None
         pfft_free(self.ptr)
 
 cdef class Plan(object):
@@ -524,11 +528,11 @@ cdef class Plan(object):
         cdef numpy.intp_t [::1] n_ = numpy.array(n, dtype='intp')
         if o is None:
             o = i
-        if &o.buffer[0] == &i.buffer[0]:
+        if o.ptr == i.ptr:
             self.inplace = True
         else:
             self.inplace = False
-        self.plan = func(n_.shape[0], &n_[0], &i.buffer[0], &o.buffer[0],
+        self.plan = func(n_.shape[0], &n_[0], i.ptr, o.ptr,
                 procmesh.comm_cart,
                 self.direction,
                 flags)
@@ -541,13 +545,13 @@ cdef class Plan(object):
         cdef pfft_execute_func func = PFFT_EXECUTE_FUNC[self.type]
         if o is None:
             o = i
-        if &o.buffer[0] == &i.buffer[0]:
+        if o.ptr == i.ptr:
             inplace = True
         else:
             inplace = False
         if inplace != self.inplace:
             raise ValueError("inplace status mismatch with the plan")
-        func(self.plan, &i.buffer[0], &o.buffer[0])
+        func(self.plan, i.ptr, o.ptr)
     def __repr__(self):
         return "Plan(" + \
                 ','.join([
