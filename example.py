@@ -37,7 +37,7 @@ iplan = pfft.Plan(partition, pfft.Direction.PFFT_BACKWARD, buffer,
         )
 
 input = buffer.view_input()
-
+print input.base
 # now lets fill the input array in a funny way
 # a[i, j] = i * 10 + j
 # we will do a tranform roundtrip and print this out

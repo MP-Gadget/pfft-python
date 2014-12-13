@@ -84,6 +84,10 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
 
     input = buf1.view_input() 
     output = buf2.view_output()
+
+    assert input.base == buf1
+    assert output.base == buf2
+
 #    print 'output', output.shape
 #    print 'input', input.shape
     forward = Plan(

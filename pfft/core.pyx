@@ -432,6 +432,7 @@ cdef class LocalBuffer:
 
         shape = local_n.copy()
         a = a.view(dtype=dtype)
+        
         if numpy.iscomplexobj(a):
             # complex array needs no padding
             shape2 = shape
@@ -457,8 +458,16 @@ cdef class LocalBuffer:
         a = a.reshape(shape)
         a = a[sel]
         #print <numpy.intp_t> a.data, <numpy.intp_t> self.ptr
+        assert <numpy.intp_t> a.data == <numpy.intp_t> self.ptr
         if roll:
             a = self.partition.restore_transposed_array(a)
+
+        cdef numpy.dtype dt = a.dtype
+        a = numpy.PyArray_New(numpy.ndarray, a.ndim, a.shape, 
+                dt.type_num, a.strides, 
+                self.ptr, dt.itemsize, numpy.NPY_BEHAVED, None)
+
+        numpy.set_array_base(a, self)
         return a
 
     def view_input(self):
