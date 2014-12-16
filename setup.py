@@ -7,16 +7,15 @@ import numpy
 import mpi4py
 
 package_basedir = os.path.abspath(os.path.dirname(__file__))
-dependsdir = os.path.join(package_basedir, 'depends')
+dependsdir = os.path.join(package_basedir, 'build', 'depends')
 compiler = mpi4py.get_config()['mpicc']
-compiler += ' -O0 -g'
 # how otherwise do I set the compiler cython uses?
 os.environ['CC'] = compiler
 os.environ['LDSHARED'] = compiler + " -shared"
 print mpi4py.get_include()
 def build_fftw():
-    line = ('CFLAGS="-fPIC -fvisibility=hidden -I%s/include" ' % dependsdir +
-            'LDFLAGS="-L%s/lib" ' % dependsdir +
+    line = ('CFLAGS="$CFLAGS -fPIC -fvisibility=hidden -I%s/include" ' % dependsdir +
+            'LDFLAGS="$LDFLAGS -L%s/lib" ' % dependsdir +
             'MPICC="%s" ' % compiler +
             'CC="%s" ' % compiler +
             'sh depends/install_fftw.sh ' +
@@ -29,8 +28,8 @@ def build_fftw():
         raise ValueError("could not build fftw")
 
 def build_pfft():
-    line = ('CFLAGS="-fPIC -fvisibility=hidden -I%s/include" ' % dependsdir +
-            'LDFLAGS="-L%s/lib" ' % dependsdir +
+    line = ('CFLAGS="$CFLAGS -fPIC -fvisibility=hidden -I%s/include" ' % dependsdir +
+            'LDFLAGS="$LDFLAGS -L%s/lib" ' % dependsdir +
             'MPICC="%s" ' % compiler +
             'CC="%s" ' % compiler +
             'sh depends/install_pfft.sh ' +
@@ -67,7 +66,9 @@ setup(
     author="Yu Feng",
     author_email="rainwoodman@gmail.com",
     description="python binding of PFFT, a massively parallel FFT library",
+    url="http://github.com/rainwoodman/pfft-python",
     #package_dir = {'pfft': 'pfft'},
+    zip_safe=False,
     install_requires=['cython', 'numpy'],
     packages= ['pfft'],
     requires=['numpy'],

@@ -1,4 +1,5 @@
 include depends/install_fftw.sh
 include depends/install_pfft.sh
-include pfft-1.0.7-a95386.tar.gz
-
+include depends/pfft-1.0.7-a95386.tar.gz
+include pfft/*.pyx
+include tests/*.py
