@@ -62,11 +62,12 @@ extensions = [
 build_fftw()
 build_pfft()
 setup(
-    name="pfft-python", version="0.1",
+    name="pfft-python", version="0.1pre",
     author="Yu Feng",
     author_email="rainwoodman@gmail.com",
     description="python binding of PFFT, a massively parallel FFT library",
     url="http://github.com/rainwoodman/pfft-python",
+    download_url="https://github.com/rainwoodman/pfft-python/releases/download/v0.1pre/pfft-python-0.1pre.tar.gz",
     #package_dir = {'pfft': 'pfft'},
     zip_safe=False,
     install_requires=['cython', 'numpy'],

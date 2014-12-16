@@ -8,27 +8,57 @@ performance, see:
 
 https://www-user.tu-chemnitz.de/~mpip/software.php.en
 
-This is the python binding of PFFT.
+This is the python binding of PFFT. 
 
-It requires mpi4py for installation. The mpicc configuration of mpi4py
-is used.
+PFFT is a FFT library with excellent scaling at large number of processors.
+We have been routinely running 10,000 ** 3 transforms on 22K MPI ranks as 
+a component of the BlueTides simulation at National Center for Supercomputing
+Applications. This is beyond our knowledge of the limits of FFTW.
 
-To install:
+This Python binding of course cannot yet operate at such a large scale. Due
+to the limitations of Python packaging and moduling system. 
+We nevertheless feel it is important to develop a python binding of PFFT to
+allow early exploration of a migration into scripting languages in super computing.
+
+pfft-python requires mpi4py for installation. 
+
+To install from PyPI:
+```
+    easy_install --user pfft-python
+```
+
+To install from git source
 
 ```
     python setup.py install --user
 ```
 
 PFFT, patched FFTW, and the binding are linked into one giant (6MB) shared
-object files. Some systems may not like it much.
+object files.  We use `-fvisibility=hidden` to hide the PFFT/FFTW symbols.
+
 
 To use:
 
   see example.py
-
   also see tests/roundtrip.py
 
+The documentation is sparse and in the source code (pfft/core.py), 
+hopefully the guide here can get you started:
 
-Current ISSUES:
-  seems to be not broken on Cray XE Edison.nersc.gov.
+1) create a ProcMesh object for the communication geometry
+2) create a Partition object for the data partition of the FFT mesh,
+   in real and fourier space, both
+3) allocate LocalBuffer objects for input and output. A LocalBuffer can be
+reused for inplace transforms. 
+4) create Plan objects for the transforms, with the LocalBuffer objects as
+scratch
+5) optionally, free the scratch buffers, and create new LocalBuffer objects.
+6) view the LocalBuffer objects via view_input / view_output 
+6) fill the LocalBuffer objects, making use of 
+    Partition.local_i_start, local_o_start which marks the offset of the local
+    mesh.
+   A useful function is numpy.indices. numpy.meshgrid and numpy.ogrid are also useful.
+7) Apply the plans via Plan.execute with LocalBuffer objects as arguments.
 
+
+- Yu Feng
