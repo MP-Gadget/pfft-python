@@ -532,8 +532,24 @@ cdef class Plan(object):
             type defaults to parititon.type
             flags defaults to partition.flags
 
+            The usually convention is:
+
+                iDFT: Direction.PFFT_FORWARD
+                DFT : Direction.PFFT_BACKWARD
+
+                CFT = dx * iDFT = (L/N) * iDFT
+                iCFT = dk * DFT = (2pi / L) * DFT
+
+                We have these normalizations:
+                iDFT(DFT) = N
+
+                iCFT(CFT) = dx * dk * DFT(iDFT)
+                          = L / N * (2pi / L) * N
+                          = 2 pi
+                
             example:
                 plan = Plan(partition, Direction.PFFT_FORWARD, buf1, buf2)
+
         """
         if type is None:
             type = partition.type
