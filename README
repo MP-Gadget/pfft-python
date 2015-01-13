@@ -20,6 +20,8 @@ to the limitations of Python packaging and moduling system.
 We nevertheless feel it is important to develop a python binding of PFFT to
 allow early exploration of a migration into scripting languages in super computing.
 
+For some leverage of the python import problem, seee `mpiimport` at http://github.com/rainwoodman/mpiimport
+
 pfft-python requires mpi4py for installation. 
 
 To install from PyPI:
