@@ -38,7 +38,7 @@ To install from git source
 ```
 
 PFFT, patched FFTW, and the binding are linked into one giant (6MB) shared
-object files.  We use `-fvisibility=hidden` to hide the PFFT/FFTW symbols.
+object file.  We use `-fvisibility=hidden` to hide the PFFT/FFTW symbols.
 
 
 To use:
