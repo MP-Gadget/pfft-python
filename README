@@ -11,7 +11,7 @@ https://www-user.tu-chemnitz.de/~mpip/software.php.en
 This is the python binding of PFFT. 
 
 PFFT is a FFT library with excellent scaling at large number of processors.
-We have been routinely running 10,000 ** 3 transforms on 22K MPI ranks as 
+We have been routinely running 10,000 ** 3 transforms on 81,000 MPI ranks as 
 a component of the BlueTides simulation at National Center for Supercomputing
 Applications. This is beyond our knowledge of the limits of FFTW.
 
