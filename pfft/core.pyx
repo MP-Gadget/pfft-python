@@ -1,3 +1,4 @@
+#cython: embedsignature=True
 """
     pfft-python: python binding of PFFT.
 
@@ -5,7 +6,6 @@
           University of California Berkeley (2014)
 
 """
-
 from mpi4py import MPI as pyMPI
 cimport libmpi as MPI
 import numpy

@@ -50,6 +50,7 @@ def myext(*args):
         mpi4py.get_include(),
         numpy.get_include(),
         ],
+        cython_directives = {"embedsignature": True},
         library_dirs=[
             os.path.join(dependsdir, 'lib'),
         ],
