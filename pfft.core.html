@@ -55,6 +55,7 @@
 <dt id="pfft.core.Direction">
 <em class="property">class </em><code class="descclassname">pfft.core.</code><code class="descname">Direction</code><a class="headerlink" href="#pfft.core.Direction" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">int</span></code></p>
+<p>PFFT Transformation Directions</p>
 <dl class="attribute">
 <dt id="pfft.core.Direction.PFFT_BACKWARD">
 <code class="descname">PFFT_BACKWARD</code><em class="property"> = 1</em><a class="headerlink" href="#pfft.core.Direction.PFFT_BACKWARD" title="Permalink to this definition">¶</a></dt>
@@ -71,6 +72,7 @@
 <dt id="pfft.core.Flags">
 <em class="property">class </em><code class="descclassname">pfft.core.</code><code class="descname">Flags</code><a class="headerlink" href="#pfft.core.Flags" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">int</span></code></p>
+<p>PFFT Transformation Flags</p>
 <dl class="attribute">
 <dt id="pfft.core.Flags.PFFT_BUFFERED_INPLACE">
 <code class="descname">PFFT_BUFFERED_INPLACE</code><em class="property"> = 1024</em><a class="headerlink" href="#pfft.core.Flags.PFFT_BUFFERED_INPLACE" title="Permalink to this definition">¶</a></dt>
@@ -326,6 +328,31 @@ inplace status of the plan.</p>
 <dt id="pfft.core.ProcMesh">
 <em class="property">class </em><code class="descclassname">pfft.core.</code><code class="descname">ProcMesh</code><span class="sig-paren">(</span><em>np</em>, <em>comm=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.core.ProcMesh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>The topology of the MPI ranks. (procmesh)</p>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="86%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>comm_cart</td>
+<td>(<code class="xref py py-class docutils literal"><span class="pre">MPI.MPI_Comm</span></code>) MPI topology</td>
+</tr>
+<tr class="row-even"><td>this</td>
+<td>(array_like) The rank of current process in the procmesh</td>
+</tr>
+<tr class="row-odd"><td>np</td>
+<td>(array_like) The shape of the proc mesh.</td>
+</tr>
+<tr class="row-even"><td>Ndim</td>
+<td>(int) size of the proc mesh</td>
+</tr>
+<tr class="row-odd"><td>rank</td>
+<td>(int) MPI rank</td>
+</tr>
+</tbody>
+</table>
 <dl class="attribute">
 <dt id="pfft.core.ProcMesh.Ndim">
 <code class="descname">Ndim</code><a class="headerlink" href="#pfft.core.ProcMesh.Ndim" title="Permalink to this definition">¶</a></dt>
@@ -352,6 +379,9 @@ inplace status of the plan.</p>
 <dt id="pfft.core.Type">
 <em class="property">class </em><code class="descclassname">pfft.core.</code><code class="descname">Type</code><a class="headerlink" href="#pfft.core.Type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">int</span></code></p>
+<p>PFFT Transformation Types</p>
+<p>Double precision is prefixed with PFFT
+Single precision is prefixed with PFFTF</p>
 <dl class="attribute">
 <dt id="pfft.core.Type.PFFTF_C2C">
 <code class="descname">PFFTF_C2C</code><em class="property"> = 4</em><a class="headerlink" href="#pfft.core.Type.PFFTF_C2C" title="Permalink to this definition">¶</a></dt>
