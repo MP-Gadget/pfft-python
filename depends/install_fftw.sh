@@ -904,3 +904,10 @@ autoreconf --verbose --install --symlink --force
 make -j 4 2>&1 | tee $LOGFILE
 make install 2>&1 | tee $LOGFILE
 
+# now build the single precision library
+./configure --prefix=$PREFIX --enable-single --enable-mpi --disable-shared \
+--enable-threads --enable-static --enable-openmp --disable-fortran |tee $LOGFILE
+
+make -j 4 2>&1 | tee $LOGFILE
+make install 2>&1 | tee $LOGFILE
+

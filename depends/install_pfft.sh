@@ -32,3 +32,10 @@ cd pfft-$PFFT_VERSION
 make -j 4 2>&1 | tee $LOGFILE
 make install 2>&1 | tee $LOGFILE
 
+./configure --prefix=$PREFIX --enable-single --disable-shared --enable-static  \
+--disable-fortran --disable-doc \
+2>&1 | tee $LOGFILE
+
+make -j 4 2>&1 | tee $LOGFILE
+make install 2>&1 | tee $LOGFILE
+
