@@ -146,6 +146,10 @@ cdef extern from 'pfft.h':
 #####
 
 class Flags(int):
+    """
+    PFFT Transformation Flags
+    """
+
     PFFT_TRANSPOSED_NONE = _PFFT_TRANSPOSED_NONE
     PFFT_TRANSPOSED_IN = _PFFT_TRANSPOSED_IN
     PFFT_TRANSPOSED_OUT = _PFFT_TRANSPOSED_OUT
@@ -171,6 +175,9 @@ class Flags(int):
         return '|'.join([k for k in d.keys() if k.startswith('PFFT') and (d[k] & self)])
 
 class Direction(int):
+    """ 
+    PFFT Transformation Directions 
+    """
     PFFT_FORWARD = _PFFT_FORWARD
     PFFT_BACKWARD = _PFFT_BACKWARD
     def __new__(cls, value):
@@ -185,6 +192,12 @@ class Direction(int):
 # fill in the function tables as well.
 ##
 class Type(int):
+    """
+    PFFT Transformation Types
+    
+    Double precision is prefixed with PFFT
+    Single precision is prefixed with PFFTF
+    """
     PFFT_C2C = 0
     PFFT_R2C = 1
     PFFT_C2R = 2
@@ -248,6 +261,22 @@ PFFT_EXECUTE_FUNC[:] = [
         ]
 
 cdef class ProcMesh(object):
+    """
+    The topology of the MPI ranks. (procmesh)
+
+    Attributes
+    ==========
+    comm_cart   : :py:class:`MPI.MPI_Comm`
+        MPI topology
+    this        : array_like 
+        The rank of current process in the procmesh 
+    np          : array_like
+        The shape of the proc mesh. 
+    Ndim        : int
+        size of the proc mesh
+    rank        : int
+        MPI rank
+    """
     cdef MPI.MPI_Comm comm_cart
     cdef readonly numpy.ndarray this # nd rank of the current process
     cdef readonly numpy.ndarray np
