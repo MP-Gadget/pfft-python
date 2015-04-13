@@ -1,0 +1,17 @@
+pfft package
+============
+
+Submodules
+----------
+
+.. toctree::
+
+   pfft.core
+
+Module contents
+---------------
+
+.. automodule:: pfft
+    :members:
+    :undoc-members:
+    :show-inheritance:

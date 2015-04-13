@@ -1,0 +1,7 @@
+pfft.core module
+================
+
+.. automodule:: pfft.core
+    :members:
+    :undoc-members:
+    :show-inheritance:

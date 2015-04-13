@@ -1,0 +1,7 @@
+pfft
+====
+
+.. toctree::
+   :maxdepth: 4
+
+   pfft
