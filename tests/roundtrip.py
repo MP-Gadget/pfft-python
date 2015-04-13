@@ -102,8 +102,14 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
         pass
 
     # find the inverse plan
-    if type == Type.PFFT_R2C:
-        btype = Type.PFFT_C2R
+    typemap = {
+        Type.PFFT_R2C: Type.PFFT_C2R,
+        Type.PFFT_C2C: Type.PFFT_C2C,
+        Type.PFFTF_R2C: Type.PFFTF_C2R,
+        Type.PFFTF_C2C: Type.PFFTF_C2C
+    }
+    btype = typemap[type]
+    if type == Type.PFFT_R2C or type == Type.PFFTF_R2C:
         bflags = flags
         # the following lines are just good looking
         # PFFT_PADDED_R2C and PFFT_PADDED_C2R
@@ -113,8 +119,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
         if flags & Flags.PFFT_PADDED_R2C:
             bflags |= Flags.PFFT_PADDED_C2R
 
-    elif type == Type.PFFT_C2C:
-        btype = Type.PFFT_C2C
+    elif type == Type.PFFT_C2C or type == Type.PFFTF_C2C:
         bflags = flags
     else:
         raise Exception("only r2c and c2c roundtrip are tested")
@@ -144,9 +149,9 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     original = input.copy()
 
     if single:
-        if type == Type.PFFT_R2C:
+        if type == Type.PFFT_R2C or type == Type.PFFTF_R2C:
             correct = numpy.fft.rfftn(original)
-        elif type == Type.PFFT_C2C:
+        elif type == Type.PFFT_C2C or type == Type.PFFTF_C2C:
             correct = numpy.fft.fftn(original)
 
     original *= numpy.product(Nmesh) # fftw vs numpy 
@@ -239,7 +244,7 @@ try:
             Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_TRANSPOSED_OUT,
             ]
     params = list(itertools.product(
-            nplist, [Type.PFFT_C2C, Type.PFFT_R2C], flags, [True, False],
+            nplist, [Type.PFFT_C2C, Type.PFFT_R2C, Type.PFFTF_C2C, Type.PFFTF_R2C], flags, [True, False],
             Nmesh,
             ))
 

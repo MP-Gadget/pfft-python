@@ -45,14 +45,19 @@ cdef extern from 'pfft.h':
 
     struct pfft_complex:
         pass
-    void pfft_execute(pfft_plan plan)
 
     void pfft_execute_dft(pfft_plan plan, void * input, void * output)
     void pfft_execute_dft_r2c(pfft_plan plan, void * input, void * output)
     void pfft_execute_dft_c2r(pfft_plan plan, void * input, void * output)
     void pfft_execute_r2r(pfft_plan plan, void * input, void * output)
 
+    void pfftf_execute_dft(pfft_plan plan, void * input, void * output)
+    void pfftf_execute_dft_r2c(pfft_plan plan, void * input, void * output)
+    void pfftf_execute_dft_c2r(pfft_plan plan, void * input, void * output)
+    void pfftf_execute_r2r(pfft_plan plan, void * input, void * output)
+
     void pfft_destroy_plan(pfft_plan plan)
+    void pfftf_destroy_plan(pfft_plan plan)
 
     pfft_plan pfft_plan_dft(
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
@@ -74,7 +79,30 @@ cdef extern from 'pfft.h':
             MPI.MPI_Comm comm_cart,
             int sign, unsigned pfft_flags)
 
+    pfft_plan pfftf_plan_dft(
+            int rnk_n, numpy.intp_t *n, void * input, void * output, 
+            MPI.MPI_Comm comm_cart,
+            int sign, unsigned pfft_flags)
+
+    pfft_plan pfftf_plan_dft_r2c(
+            int rnk_n, numpy.intp_t *n, void * input, void * output, 
+            MPI.MPI_Comm comm_cart,
+            int sign, unsigned pfft_flags)
+
+    pfft_plan pfftf_plan_dft_c2r(
+            int rnk_n, numpy.intp_t *n, void * input, void * output, 
+            MPI.MPI_Comm comm_cart,
+            int sign, unsigned pfft_flags)
+
+    pfft_plan pfftf_plan_r2r(
+            int rnk_n, numpy.intp_t *n, void * input, void * output, 
+            MPI.MPI_Comm comm_cart,
+            int sign, unsigned pfft_flags)
+
     int pfft_create_procmesh(int rnk_n, MPI.MPI_Comm comm, int *np, 
+            MPI.MPI_Comm * comm_cart)
+
+    int pfftf_create_procmesh(int rnk_n, MPI.MPI_Comm comm, int *np, 
             MPI.MPI_Comm * comm_cart)
 
     numpy.intp_t pfft_local_size_dft(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
@@ -90,6 +118,22 @@ cdef extern from 'pfft.h':
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
 
     numpy.intp_t pfft_local_size_r2r(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+            pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
+            numpy.intp_t* local_no, numpy.intp_t * local_o_start)
+
+    numpy.intp_t pfftf_local_size_dft(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+            pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
+            numpy.intp_t* local_no, numpy.intp_t * local_o_start)
+
+    numpy.intp_t pfftf_local_size_dft_r2c(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+            pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
+            numpy.intp_t* local_no, numpy.intp_t * local_o_start)
+
+    numpy.intp_t pfftf_local_size_dft_c2r(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+            pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
+            numpy.intp_t* local_no, numpy.intp_t * local_o_start)
+
+    numpy.intp_t pfftf_local_size_r2r(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
 
@@ -145,6 +189,10 @@ class Type(int):
     PFFT_R2C = 1
     PFFT_C2R = 2
     PFFT_R2R = 3
+    PFFTF_C2C = 4
+    PFFTF_R2C = 5
+    PFFTF_C2R = 6
+    PFFTF_R2R = 7
     def __new__(cls, value):
         self = int.__new__(cls, value)
         return self
@@ -155,36 +203,48 @@ class Type(int):
 ctypedef numpy.intp_t (*pfft_local_size_func)(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
-cdef pfft_local_size_func PFFT_LOCAL_SIZE_FUNC [4]
+cdef pfft_local_size_func PFFT_LOCAL_SIZE_FUNC [8]
 
 PFFT_LOCAL_SIZE_FUNC[:] = [
     <pfft_local_size_func> pfft_local_size_dft,
     <pfft_local_size_func> pfft_local_size_dft_r2c,
     <pfft_local_size_func> pfft_local_size_dft_c2r,
-    <pfft_local_size_func> pfft_local_size_r2r
+    <pfft_local_size_func> pfft_local_size_r2r,
+    <pfft_local_size_func> pfftf_local_size_dft,
+    <pfft_local_size_func> pfftf_local_size_dft_r2c,
+    <pfft_local_size_func> pfftf_local_size_dft_c2r,
+    <pfft_local_size_func> pfftf_local_size_r2r,
         ]
 
 ctypedef pfft_plan (*pfft_plan_func) (
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
             MPI.MPI_Comm comm_cart,
             int sign, unsigned pfft_flags)
-cdef pfft_plan_func PFFT_PLAN_FUNC [4]
+cdef pfft_plan_func PFFT_PLAN_FUNC [8]
 
 PFFT_PLAN_FUNC[:] = [
     <pfft_plan_func> pfft_plan_dft,
     <pfft_plan_func> pfft_plan_dft_r2c,
     <pfft_plan_func> pfft_plan_dft_c2r,
-    <pfft_plan_func> pfft_plan_r2r
+    <pfft_plan_func> pfft_plan_r2r,
+    <pfft_plan_func> pfftf_plan_dft,
+    <pfft_plan_func> pfftf_plan_dft_r2c,
+    <pfft_plan_func> pfftf_plan_dft_c2r,
+    <pfft_plan_func> pfftf_plan_r2r,
         ]
 
 ctypedef void (*pfft_execute_func) ( pfft_plan plan, void * input, void * output)
-cdef pfft_execute_func PFFT_EXECUTE_FUNC [4]
+cdef pfft_execute_func PFFT_EXECUTE_FUNC [8]
 
 PFFT_EXECUTE_FUNC[:] = [
     <pfft_execute_func> pfft_execute_dft,
     <pfft_execute_func> pfft_execute_dft_r2c,
     <pfft_execute_func> pfft_execute_dft_c2r,
-    <pfft_execute_func> pfft_execute_r2r
+    <pfft_execute_func> pfft_execute_r2r,
+    <pfft_execute_func> pfftf_execute_dft,
+    <pfft_execute_func> pfftf_execute_dft_r2c,
+    <pfft_execute_func> pfftf_execute_dft_c2r,
+    <pfft_execute_func> pfftf_execute_r2r,
         ]
 
 cdef class ProcMesh(object):
@@ -489,7 +549,10 @@ cdef class LocalBuffer:
             The base attribute of the returned array points back to the LocalBuffer
             object.
         """
-        dtypes = ['complex128', 'float64', 'complex128', 'float64']
+        dtypes = [
+                'complex128', 'float64', 'complex128', 'float64',
+                'complex64', 'float32', 'complex64', 'float32',
+                 ]
         return self._view(dtypes[self.partition.type],
                 self.partition.local_ni,
                 self.partition.local_i_start,
@@ -507,7 +570,10 @@ cdef class LocalBuffer:
             The base attribute of the returned array points back to the LocalBuffer
             object.
         """
-        dtypes = ['complex128', 'complex128', 'float64', 'float64']
+        dtypes = [
+                'complex128', 'complex128', 'float64', 'float64'
+                'complex64', 'complex64', 'float32', 'float32'
+                 ]
         return self._view(dtypes[self.partition.type],
                 self.partition.local_no,
                 self.partition.local_o_start,

@@ -54,7 +54,7 @@ def myext(*args):
         library_dirs=[
             os.path.join(dependsdir, 'lib'),
         ],
-        libraries=["pfft", "fftw3_mpi", "fftw3"])
+        libraries=["pfft", "pfftf", "fftw3_mpi", "fftw3f_mpi", "fftw3", "fftw3f"])
 
 extensions = [
         myext("pfft.core", ["pfft/core.pyx"]),
