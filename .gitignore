@@ -1,0 +1,7 @@
+build/
+*.pyc
+*.so
+tmp-fftw-3.3.3/
+tmp-pfft-1.0.7-a95386/
+pfft/core.c
+
