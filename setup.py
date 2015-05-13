@@ -8,7 +8,11 @@ import mpi4py
 
 package_basedir = os.path.abspath(os.path.dirname(__file__))
 dependsdir = os.path.join(package_basedir, 'build', 'depends')
-compiler = mpi4py.get_config()['mpicc']
+try:
+    compiler = mpi4py.get_config()['mpicc']
+except:
+    compiler = os.environ['MPICC']
+
 # how otherwise do I set the compiler cython uses?
 os.environ['CC'] = compiler
 os.environ['LDSHARED'] = compiler + " -shared"
