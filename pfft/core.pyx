@@ -600,8 +600,8 @@ cdef class LocalBuffer:
             object.
         """
         dtypes = [
-                'complex128', 'complex128', 'float64', 'float64'
-                'complex64', 'complex64', 'float32', 'float32'
+                'complex128', 'complex128', 'float64', 'float64',
+                'complex64', 'complex64', 'float32', 'float32',
                  ]
         return self._view(dtypes[self.partition.type],
                 self.partition.local_no,
