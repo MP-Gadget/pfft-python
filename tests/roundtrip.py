@@ -166,15 +166,15 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     ocpy = output.copy()
 
     if single:
-        if False:
+        if True:
             print output.shape
             print correct.shape
-            print output
-            print correct
+            print output.dtype
+            print correct.dtype
             print i
 
         r2cerr = numpy.abs(output - correct).std(dtype='f8')
-        #print repr(forward.type), "error = ", r2cerr
+        print repr(forward.type), "error = ", r2cerr
         i[:] = 0
         output[:] = correct
 
@@ -185,7 +185,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     i2 = numpy.array(buf1.buffer, copy=True)
 
     if input.size > 0:
-        c2rerr = numpy.abs(original - input).std(dtype='f8')
+        c2rerr = numpy.abs(original - input).max()
     else:
         c2rerr = 0.0
 
@@ -204,10 +204,10 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
         MPI.COMM_WORLD.barrier()
 
     if single:
-        if (r2cerr > 1e-5):
+        if (r2cerr > 5e-4):
             raise LargeError("r2c: %g" % r2cerr)
     c2rerr = MPI.COMM_WORLD.allreduce(c2rerr, op=MPI.SUM)
-    if (c2rerr > 1e-5):
+    if (c2rerr > 5e-4):
         raise LargeError("c2r: %g" % c2rerr)
 
 if MPI.COMM_WORLD.size == 1: 
@@ -261,7 +261,7 @@ try:
             test_roundtrip_3d(procmesh, *(param[1:]))
             PASS.append(param)
         except LargeError as e:
-            FAIL.append(param)
+            FAIL.append((param, e))
 
     if MPI.COMM_WORLD.rank == 0:
         print "PASS", len(PASS), '/', len(params)
@@ -270,8 +270,8 @@ try:
                 print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4]
         print "FAIL", len(FAIL), '/', len(params)
         if ns.diag:
-            for f in FAIL:
-                print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4]
+            for f, e in FAIL:
+                print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4], e
 except Exception as e:
     print traceback.format_exc()
     MPI.COMM_WORLD.Abort()
