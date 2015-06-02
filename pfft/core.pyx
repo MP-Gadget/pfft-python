@@ -45,6 +45,8 @@ cdef extern from 'pfft.h':
 
     struct pfft_complex:
         pass
+    struct pfftf_complex:
+        pass
 
     void pfft_execute_dft(pfft_plan plan, void * input, void * output)
     void pfft_execute_dft_r2c(pfft_plan plan, void * input, void * output)
@@ -139,6 +141,7 @@ cdef extern from 'pfft.h':
 
     double * pfft_alloc_real(size_t size)
     pfft_complex * pfft_alloc_complex(size_t size)
+    pfftf_complex * pfftf_alloc_complex(size_t size)
     void pfft_free(void * ptr)
 
 #######
@@ -193,8 +196,7 @@ class Direction(int):
 ##
 class Type(int):
     """
-    PFFT Transformation Types
-    
+    PFFT Transformation Types 
     Double precision is prefixed with PFFT
     Single precision is prefixed with PFFTF
     """
@@ -258,6 +260,19 @@ PFFT_EXECUTE_FUNC[:] = [
     <pfft_execute_func> pfftf_execute_dft_r2c,
     <pfft_execute_func> pfftf_execute_dft_c2r,
     <pfft_execute_func> pfftf_execute_r2r,
+        ]
+
+cdef int PFFT_NPY_TYPE[8]
+
+PFFT_NPY_TYPE[:] = [
+    numpy.NPY_DOUBLE,
+    numpy.NPY_DOUBLE,
+    numpy.NPY_DOUBLE,
+    numpy.NPY_DOUBLE,
+    numpy.NPY_FLOAT,
+    numpy.NPY_FLOAT,
+    numpy.NPY_FLOAT,
+    numpy.NPY_FLOAT,
         ]
 
 cdef class ProcMesh(object):
@@ -509,7 +524,8 @@ cdef class LocalBuffer:
         def __get__(self):
             cdef numpy.intp_t shape[1]
             shape[0] = self.partition.alloc_local * 2
-            cdef numpy.ndarray buffer = numpy.PyArray_SimpleNewFromData(1, shape, numpy.NPY_DOUBLE, self.ptr)
+            cdef numpy.ndarray buffer = numpy.PyArray_SimpleNewFromData(1, shape, 
+                    PFFT_NPY_TYPE[self.partition.type], self.ptr)
             numpy.set_array_base(buffer, self)
             return buffer
 
@@ -521,7 +537,10 @@ cdef class LocalBuffer:
             see the documents of view_input, view_output
         """
         self.partition = partition
-        self.ptr = pfft_alloc_complex(partition.alloc_local)
+        if PFFT_NPY_TYPE[self.partition.type] == numpy.NPY_DOUBLE:
+            self.ptr = pfft_alloc_complex(partition.alloc_local)
+        elif PFFT_NPY_TYPE[self.partition.type] == numpy.NPY_FLOAT:
+            self.ptr = pfftf_alloc_complex(partition.alloc_local)
 
     def _view(self, dtype, local_n, local_start, roll, padded):
 
