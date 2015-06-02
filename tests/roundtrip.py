@@ -166,14 +166,14 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     ocpy = output.copy()
 
     if single:
-        if True:
+        if False:
             print output.shape
             print correct.shape
             print output.dtype
             print correct.dtype
             print i
 
-        r2cerr = numpy.abs(output - correct).std(dtype='f8')
+        r2cerr = numpy.abs(output - correct).max()
         print repr(forward.type), "error = ", r2cerr
         i[:] = 0
         output[:] = correct
@@ -204,6 +204,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
         MPI.COMM_WORLD.barrier()
 
     if single:
+        print repr(forward.type), 'backward', "error = ", c2rerr
         if (r2cerr > 5e-4):
             raise LargeError("r2c: %g" % r2cerr)
     c2rerr = MPI.COMM_WORLD.allreduce(c2rerr, op=MPI.SUM)
