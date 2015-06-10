@@ -8,15 +8,21 @@ import mpi4py
 
 package_basedir = os.path.abspath(os.path.dirname(__file__))
 dependsdir = os.path.join(package_basedir, 'build', 'depends')
-try:
-    compiler = str(mpi4py.get_config()['mpicc'])
-except:
-    compiler = os.environ['MPICC']
 
-# how otherwise do I set the compiler cython uses?
+if 'MPICC' in os.environ:
+    compiler = os.environ['MPICC']
+else:
+    try:
+        compiler = str(mpi4py.get_config()['mpicc'])
+    except:
+        pass
+    compiler = "mpicc"
+
 os.environ['CC'] = compiler
-os.environ['LDSHARED'] = compiler + " -shared"
-print mpi4py.get_include()
+
+if 'LDSHARED' not in os.environ:
+    os.environ['LDSHARED'] = compiler + ' -shared'
+
 def build_fftw():
     line = ('CFLAGS="$CFLAGS -fPIC -fvisibility=hidden -I%s/include" ' % dependsdir +
             'LDFLAGS="$LDFLAGS -L%s/lib" ' % dependsdir +
