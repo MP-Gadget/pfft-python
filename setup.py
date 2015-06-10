@@ -9,7 +9,7 @@ import mpi4py
 package_basedir = os.path.abspath(os.path.dirname(__file__))
 dependsdir = os.path.join(package_basedir, 'build', 'depends')
 try:
-    compiler = mpi4py.get_config()['mpicc']
+    compiler = str(mpi4py.get_config()['mpicc'])
 except:
     compiler = os.environ['MPICC']
 
