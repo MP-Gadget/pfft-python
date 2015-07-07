@@ -27,7 +27,7 @@ def build_pfft():
     line = ('CFLAGS="$CFLAGS -fPIC -fvisibility=hidden" ' +
             'MPICC="%s" ' % compiler +
             'CC="%s" ' % compiler +
-            'sh depends/install_pfft.sh ' +
+            'sh %s/depends/install_pfft.sh ' % package_basedir +
              dependsdir)
     if os.path.exists(os.path.join(dependsdir, 
         'lib', 'libpfft.a')):

@@ -17,11 +17,11 @@ if [ -d $TMP ]; then
 	fi
 fi
 
-wget -N https://github.com/rainwoodman/pfft/releases/download/$PFFT_VERSION/pfft-$PFFT_VERSION.tar.gz \
-    -O $ROOT/depends/pfft-$PFFT_VERSION.tar.gz 
-
 mkdir $TMP 
 ROOT=`dirname $0`/../
+wget https://github.com/rainwoodman/pfft/releases/download/$PFFT_VERSION/pfft-$PFFT_VERSION.tar.gz \
+    -O $ROOT/depends/pfft-$PFFT_VERSION.tar.gz 
+
 gzip -dc $ROOT/depends/pfft-$PFFT_VERSION.tar.gz | tar xvf - -C $TMP
 cd $TMP
 
