@@ -23,20 +23,6 @@ os.environ['CC'] = compiler
 if 'LDSHARED' not in os.environ:
     os.environ['LDSHARED'] = compiler + ' -shared'
 
-def build_fftw():
-    line = ('CFLAGS="$CFLAGS -fPIC -fvisibility=hidden -I%s/include" ' % dependsdir +
-            'LDFLAGS="$LDFLAGS -L%s/lib" ' % dependsdir +
-            'MPICC="%s" ' % compiler +
-            'CC="%s" ' % compiler +
-            'sh depends/install_fftw.sh ' +
-             dependsdir)
-    if os.path.exists(os.path.join(dependsdir, 
-        'lib', 'libfftw3.a')):
-        return
-    ret=os.system(line)
-    if ret != 0:
-        raise ValueError("could not build fftw")
-
 def build_pfft():
     line = ('CFLAGS="$CFLAGS -fPIC -fvisibility=hidden" ' +
             'MPICC="%s" ' % compiler +
