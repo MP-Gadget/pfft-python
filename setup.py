@@ -38,8 +38,7 @@ def build_fftw():
         raise ValueError("could not build fftw")
 
 def build_pfft():
-    line = ('CFLAGS="$CFLAGS -fPIC -fvisibility=hidden -I%s/include" ' % dependsdir +
-            'LDFLAGS="$LDFLAGS -L%s/lib" ' % dependsdir +
+    line = ('CFLAGS="$CFLAGS -fPIC -fvisibility=hidden" ' +
             'MPICC="%s" ' % compiler +
             'CC="%s" ' % compiler +
             'sh depends/install_pfft.sh ' +
@@ -70,7 +69,6 @@ extensions = [
         myext("pfft.core", ["pfft/core.pyx"]),
         ]
 
-build_fftw()
 build_pfft()
 setup(
     name="pfft-python", version="0.1pre",
