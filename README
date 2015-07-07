@@ -22,9 +22,9 @@ allow early exploration of a migration into scripting languages in super computi
 For example, we have build a particle-mesh solver at
     http://github.com/rainwoodman/pypm
 
-For some leverage of the python import problem, seee `mpiimport` at 
+For some leverage of the python import problem, see `python-mpi-bcast` at 
 
-    http://github.com/rainwoodman/mpiimport
+    http://github.com/rainwoodman/python-mpi-bcast
 
 pfft-python requires mpi4py for installation. 
 
