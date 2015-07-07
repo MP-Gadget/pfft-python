@@ -17,7 +17,9 @@ if [ -d $TMP ]; then
 	fi
 fi
 
-wget https://github.com/rainwoodman/pfft/releases/download/$PFFT_VERSION/pfft-$PFFT_VERSION.tar.gz
+wget -N https://github.com/rainwoodman/pfft/releases/download/$PFFT_VERSION/pfft-$PFFT_VERSION.tar.gz \
+    -O $ROOT/depends/pfft-$PFFT_VERSION.tar.gz 
+
 mkdir $TMP 
 ROOT=`dirname $0`/../
 gzip -dc $ROOT/depends/pfft-$PFFT_VERSION.tar.gz | tar xvf - -C $TMP
@@ -26,14 +28,14 @@ cd $TMP
 cd pfft-$PFFT_VERSION
 
 ./configure --prefix=$PREFIX --disable-shared --enable-static  \
---disable-fortran --disable-doc --enable-mpi \
+--disable-fortran --disable-doc --enable-mpi --enable-sse2 --enable-avx \
 2>&1 | tee $LOGFILE
 
 make -j 4 2>&1 | tee $LOGFILE
 make install 2>&1 | tee $LOGFILE
 
 ./configure --prefix=$PREFIX --enable-single --disable-shared --enable-static  \
---disable-fortran --disable-doc --enable-mpi \
+--disable-fortran --disable-doc --enable-mpi --enable-sse --enable-avx \
 2>&1 | tee $LOGFILE
 
 make -j 4 2>&1 | tee $LOGFILE
