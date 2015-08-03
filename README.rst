@@ -53,19 +53,19 @@ object file.  We use `-fvisibility=hidden` to hide the PFFT/FFTW symbols.
 The mental model of PFFT is similar to FFTW. We plan ahead such that the code
 runs and runs fast. 4 objects are involved in a FFT:
 
-- ProcMesh: The topology / geometry of the MPI ranks. For example 4x2 or 2x4 for 8
-            ranks, or 250x200 for 500000 ranks.
+- ProcMesh : The topology / geometry of the MPI ranks. For example 4x2 or 2x4 for 8
+  ranks, or 250x200 for 500000 ranks.
 
-- Partition: The partition of the FFT input / output array onto the ranks.
-            local_i_slice, local_i_start, local_ni describes the relative offset
-            of the input. replacing 'i' with 'o' for the output.
+- Partition : The partition of the FFT input / output array onto the ranks.
+  local_i_slice, local_i_start, local_ni describes the relative offset
+  of the input. replacing 'i' with 'o' for the output.
 
-- LocalBuffer: The place holder of the local data storage (allocated by PFFT).
-            use view_input() view_output() to obtain the correct numpy array of the
-            correct shape and strides suited for either the input or the output.
-            -- always indexed in (x, y, z) ordering.
+- LocalBuffer : The place holder of the local data storage (allocated by PFFT).
+  use view_input() view_output() to obtain the correct numpy array of the
+  correct shape and strides suited for either the input or the output.
+  -- always indexed in (x, y, z) ordering.
 
-- Plan: The PFFT plan. execute the plan to obtain the results in the output array.
+- Plan : The PFFT plan. execute the plan to obtain the results in the output array.
 
 A fairly complex example (testing agreement with numpy.fft) is at tests/roundtrip.py .
 A simpler example is example.py.
@@ -73,20 +73,27 @@ A simpler example is example.py.
 The documentation is sparse and in the source code (pfft/core.pyx), 
 hopefully the guide here can get you started:
 
-1. create a ProcMesh object for the communication geometry
-2. create a Partition object for the data partition of the FFT mesh,
-   in real and fourier space, both
-3. allocate LocalBuffer objects for input and output. A LocalBuffer can be
-reused for inplace transforms. 
-4. create Plan objects for the transforms, with the LocalBuffer objects as
-scratch
-5. optionally, free the scratch buffers, and create new LocalBuffer objects.
-6. view the LocalBuffer objects via view_input / view_output 
-7. fill the LocalBuffer objects, making use of 
-    Partition.local_i_start, local_o_start which marks the offset of the local
-    mesh.
-   A useful function is numpy.indices. numpy.meshgrid and numpy.ogrid are also useful.
-8. Apply the plans via Plan.execute with LocalBuffer objects as arguments.
+1 create a ProcMesh object for the communication geometry
+
+2 create a Partition object for the data partition of the FFT mesh,
+  in real and fourier space, both
+
+3 allocate LocalBuffer objects for input and output. A LocalBuffer can be
+  reused for inplace transforms. 
+
+4 create Plan objects for the transforms, with the LocalBuffer objects as
+  scratch
+
+5 optionally, free the scratch buffers, and create new LocalBuffer objects.
+
+6 view the LocalBuffer objects via view_input / view_output 
+
+7 fill the LocalBuffer objects, making use of 
+  Partition.local_i_start, local_o_start which marks the offset of the local
+  mesh.
+  A useful function is numpy.indices. numpy.meshgrid and numpy.ogrid are also useful.
+
+8 Apply the plans via Plan.execute with LocalBuffer objects as arguments.
 
 
-- Yu Feng
+Yu Feng
