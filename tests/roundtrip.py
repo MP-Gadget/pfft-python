@@ -179,13 +179,12 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
         MPI.COMM_WORLD.barrier()
         if rank != procmesh.rank:
             continue
-        #print rank, repr(backward.type), "error = ", c2rerr
         if False:
-            print 'error', original - input
+            print('error', original - input)
         MPI.COMM_WORLD.barrier()
 
-    print repr(forward.type), 'forward', "error = ", r2cerr
-    print repr(forward.type), 'backward', "error = ", c2rerr
+    print(repr(forward.type), 'forward', "error = ", r2cerr)
+    print(repr(forward.type), 'backward', "error = ", c2rerr)
 
     if (r2cerr > 5e-4):
         raise LargeError("r2c: %g" % r2cerr)
@@ -237,7 +236,7 @@ try:
         if MPI.COMM_WORLD.rank == 0:
             if ns.verbose:
                 f = param
-                print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4]
+                print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4])
         np = param[0]
         procmesh = ProcMesh(np)
         try:
@@ -247,14 +246,14 @@ try:
             FAIL.append((param, e))
 
     if MPI.COMM_WORLD.rank == 0:
-        print "PASS", len(PASS), '/', len(params)
+        print("PASS", len(PASS), '/', len(params))
         if ns.diag:
             for f in PASS:
-                print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4]
-        print "FAIL", len(FAIL), '/', len(params)
+                print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4])
+        print("FAIL", len(FAIL), '/', len(params))
         if ns.diag:
             for f, e in FAIL:
-                print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4], e
+                print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4], e)
     assert len(FAIL) == 0
 except Exception as e:
     print traceback.format_exc()
