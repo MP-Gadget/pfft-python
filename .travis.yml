@@ -1,0 +1,56 @@
+
+# http://travis-ci.org/mpi4py/mpi4py
+
+language: python
+python:
+    - 2.6
+    - 2.7
+    - 3.2
+    - 3.3
+    - 3.4
+
+env:
+    - MPI=mpich3
+    - MPI=mpich2
+    - MPI=mpich1
+    - MPI=openmpi
+
+matrix:
+  allow_failures:
+    - python: pypy
+    - python: pypy3
+    - env: MPI=mpich1
+
+branches:
+  only:
+    - master
+    - maint
+
+cache:
+  apt: true
+
+before_install:
+    - sudo apt-get update -q
+    - sh ./travis-install-mpi.sh $MPI
+    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+    - conda update --yes conda
+
+install:
+    - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
+    - source activate test
+    - conda install --yes numpy=$NUMPY_VERSION nose cython mpi4py
+    - python setup.py install 
+
+before_script:
+    - sudo hostname localhost
+    - MPIEXEC='mpiexec'; PYTHON='python';
+    - test $MPI == mpich1 && MPIEXEC='mpirun' || true
+    - test $MPI == mpich1 && PYTHON=$(command -v $PYTHON) || true
+    - test $MPI == mpich2 && MPIEXEC='mpiexec -launcher fork' || true
+    - test $MPI == mpich3 && MPIEXEC='mpiexec -launcher fork' || true
+script:
+    - $MPIEXEC -n 1 $PYTHON $PWD/tests/roundtrip.py
+    - $MPIEXEC -n 4 $PYTHON $PWD/tests/roundtrip.py
+
+#notifications:
+#  email: false
