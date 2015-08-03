@@ -377,6 +377,8 @@ cdef class Partition(object):
     cdef readonly numpy.ndarray local_i_start
     cdef readonly numpy.ndarray local_no
     cdef readonly numpy.ndarray local_o_start
+    cdef readonly object local_i_slice
+    cdef readonly object local_o_slice
     cdef readonly object type
     cdef readonly object flags
     cdef readonly ProcMesh procmesh
@@ -417,7 +419,6 @@ cdef class Partition(object):
 
         self.type = Type(type)
         self.flags = Flags(flags)
-
         cdef pfft_local_size_func func = PFFT_LOCAL_SIZE_FUNC[self.type]
 
 
@@ -447,6 +448,16 @@ cdef class Partition(object):
         self.o_edges = self._build_edges(self.local_o_start,
                 self.flags & Flags.PFFT_TRANSPOSED_OUT
                 )
+
+        self.local_i_slice = tuple(
+                [slice(start, start + n)
+                for start, n in zip(
+                    self.local_i_start, self.local_ni)])
+        self.local_o_slice = tuple(
+                [slice(start, start + n)
+                for start, n in zip(
+                    self.local_o_start, self.local_no)])
+
 
     def _build_edges(self, numpy.intp_t[::1] local_start, transposed):
         cdef numpy.intp_t[::1] start_dim

@@ -63,11 +63,6 @@ class LargeError(Exception):
     pass
 
 def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
-    if numpy.product(procmesh.np) > 1:
-        single = False
-    else:
-        single = True
-
     partition = Partition(type, Nmesh, procmesh, flags)
     for rank in range(MPI.COMM_WORLD.size):
         MPI.COMM_WORLD.barrier()
@@ -143,48 +138,39 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     if procmesh.rank == 0:
         #print repr(backward)
         pass
-    i = numpy.array(buf1.buffer, copy=False)
+
     numpy.random.seed(9999)
-    i[:] = numpy.random.normal(size=i.shape)
+
+    fullinput = numpy.random.normal(size=Nmesh)
+    if type == Type.PFFT_R2C or type == Type.PFFTF_R2C:
+        correct = numpy.fft.rfftn(fullinput)
+    elif type == Type.PFFT_C2C or type == Type.PFFTF_C2C:
+        correct = numpy.fft.fftn(fullinput)
+
+
+    input[:] = fullinput[partition.local_i_slice]
+    correct = correct[partition.local_o_slice].copy()
+
     original = input.copy()
-
-    if single:
-        if type == Type.PFFT_R2C or type == Type.PFFTF_R2C:
-            correct = numpy.fft.rfftn(original)
-        elif type == Type.PFFT_C2C or type == Type.PFFTF_C2C:
-            correct = numpy.fft.fftn(original)
-
-    original *= numpy.product(Nmesh) # fftw vs numpy 
-    i = i.copy() * numpy.product(Nmesh)
 
     if not inplace:
         output[:] = 0
 
     forward.execute(buf1, buf2)
 
-    o = numpy.array(buf2.buffer, copy=True)
-    ocpy = output.copy()
-
-    if single:
-        if False:
-            print output.shape
-            print correct.shape
-            print output.dtype
-            print correct.dtype
-            print i
-
+    if output.size > 0:
         r2cerr = numpy.abs(output - correct).max()
-        print repr(forward.type), "error = ", r2cerr
-        i[:] = 0
-        output[:] = correct
+    else:
+        r2cerr = 0.0
+    # now test the backward transformation
+    input[:] = 0
+    output[:] = correct
 
-    if not inplace:
-        input[:] = 0
     backward.execute(buf2, buf1)
 
-    i2 = numpy.array(buf1.buffer, copy=True)
-
     if input.size > 0:
+        input[:] /= numpy.product(Nmesh)
+        # some distributions have no input value
         c2rerr = numpy.abs(original - input).max()
     else:
         c2rerr = 0.0
@@ -195,19 +181,15 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
             continue
         #print rank, repr(backward.type), "error = ", c2rerr
         if False:
-            print ocpy
-            print o
-            print original 
-            print input
-            print i2
-            print i / numpy.product(Nmesh)
+            print 'error', original - input
         MPI.COMM_WORLD.barrier()
 
-    if single:
-        print repr(forward.type), 'backward', "error = ", c2rerr
-        if (r2cerr > 5e-4):
-            raise LargeError("r2c: %g" % r2cerr)
-    c2rerr = MPI.COMM_WORLD.allreduce(c2rerr, op=MPI.SUM)
+    print repr(forward.type), 'forward', "error = ", r2cerr
+    print repr(forward.type), 'backward', "error = ", c2rerr
+
+    if (r2cerr > 5e-4):
+        raise LargeError("r2c: %g" % r2cerr)
+
     if (c2rerr > 5e-4):
         raise LargeError("c2r: %g" % c2rerr)
 
@@ -273,6 +255,7 @@ try:
         if ns.diag:
             for f, e in FAIL:
                 print "NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4], e
+    assert len(FAIL) == 0
 except Exception as e:
     print traceback.format_exc()
     MPI.COMM_WORLD.Abort()
