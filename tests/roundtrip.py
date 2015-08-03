@@ -256,5 +256,5 @@ try:
                 print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4], e)
     assert len(FAIL) == 0
 except Exception as e:
-    print traceback.format_exc()
+    print(traceback.format_exc())
     MPI.COMM_WORLD.Abort()
