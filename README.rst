@@ -10,6 +10,10 @@ performance, see:
 
 This is the python binding of PFFT. 
 
+.. image:: https://api.travis-ci.org/rainwoodman/pfft-python.svg
+    :alt: Build Status
+    :target: https://travis-ci.org/rainwoodman/pfft-python/
+
 PFFT is a FFT library with excellent scaling at large number of processors.
 We have been routinely running 10,000 ** 3 transforms on 81,000 MPI ranks as 
 a component of the BlueTides simulation at National Center for Supercomputing
