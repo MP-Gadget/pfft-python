@@ -12,12 +12,17 @@ python:
 env:
     - NUMPY_VERSION=1.8 MPI=openmpi
 
+addons:
+    apt:
+        packages:
+            - openmpi-bin 
+            - openmpi-dev
+
 before_install:
-    - sudo apt-get update -q
-    - sh ./travis-install-mpi.sh $MPI
+    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
     - chmod +x miniconda.sh
     - ./miniconda.sh -b
-    - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+    - export PATH=/home/travis/miniconda/bin:$PATH
     - conda update --yes conda
 
 install:
@@ -26,15 +31,9 @@ install:
     - conda install --yes numpy=$NUMPY_VERSION nose cython mpi4py
     - python setup.py install 
 
-before_script:
-    - MPIEXEC='mpiexec'; PYTHON='python';
-    - test $MPI == mpich1 && MPIEXEC='mpirun' || true
-    - test $MPI == mpich1 && PYTHON=$(command -v $PYTHON) || true
-    - test $MPI == mpich2 && MPIEXEC='mpiexec -launcher fork' || true
-    - test $MPI == mpich3 && MPIEXEC='mpiexec -launcher fork' || true
 script:
-    - $MPIEXEC -n 1 $PYTHON $PWD/tests/roundtrip.py
-    - $MPIEXEC -n 4 $PYTHON $PWD/tests/roundtrip.py
+    - mpirun -n 1 $PYTHON $PWD/tests/roundtrip.py
+    - mpirun -n 4 $PYTHON $PWD/tests/roundtrip.py
 
 #notifications:
 #  email: false
