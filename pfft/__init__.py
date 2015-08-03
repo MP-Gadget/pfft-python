@@ -1,4 +1,4 @@
-from core import *
+from .core import *
 
 def split_size_2d(s):
     """ Split `s` into two integers, 
