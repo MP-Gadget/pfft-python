@@ -73,27 +73,27 @@ A simpler example is example.py.
 The documentation is sparse and in the source code (pfft/core.pyx), 
 hopefully the guide here can get you started:
 
-1 create a ProcMesh object for the communication geometry
+1. create a ProcMesh object for the communication geometry
 
-2 create a Partition object for the data partition of the FFT mesh,
-  in real and fourier space, both
+2. create a Partition object for the data partition of the FFT mesh,
+   in real and fourier space, both
 
-3 allocate LocalBuffer objects for input and output. A LocalBuffer can be
-  reused for inplace transforms. 
+3. allocate LocalBuffer objects for input and output. A LocalBuffer can be
+   reused for inplace transforms. 
 
-4 create Plan objects for the transforms, with the LocalBuffer objects as
-  scratch
+4. create Plan objects for the transforms, with the LocalBuffer objects as
+   scratch
 
-5 optionally, free the scratch buffers, and create new LocalBuffer objects.
+5. optionally, free the scratch buffers, and create new LocalBuffer objects.
 
-6 view the LocalBuffer objects via view_input / view_output 
+6. view the LocalBuffer objects via view_input / view_output 
 
-7 fill the LocalBuffer objects, making use of 
-  Partition.local_i_start, local_o_start which marks the offset of the local
-  mesh.
-  A useful function is numpy.indices. numpy.meshgrid and numpy.ogrid are also useful.
+7. fill the LocalBuffer objects, making use of 
+   Partition.local_i_start, local_o_start which marks the offset of the local
+   mesh.
+   A useful function is numpy.indices. numpy.meshgrid and numpy.ogrid are also useful.
 
-8 Apply the plans via Plan.execute with LocalBuffer objects as arguments.
+8. Apply the plans via Plan.execute with LocalBuffer objects as arguments.
 
 
 Yu Feng
