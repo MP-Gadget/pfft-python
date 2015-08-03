@@ -204,7 +204,6 @@ if MPI.COMM_WORLD.size == 1:
             [1, 1],
             ]
 else:
-    print ns.Nproc
     nplist = ns.Nproc
             
 
