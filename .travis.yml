@@ -26,8 +26,8 @@ install:
     - python setup.py install > build.log
 
 script:
-    - mpirun -n 1 $PYTHON $PWD/tests/roundtrip.py
-    - mpirun -n 4 $PYTHON $PWD/tests/roundtrip.py
+    - mpirun -n 1 python $PWD/tests/roundtrip.py
+    - mpirun -n 4 python $PWD/tests/roundtrip.py
 
 #notifications:
 #  email: false
