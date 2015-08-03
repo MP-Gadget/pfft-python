@@ -10,28 +10,13 @@ python:
     - 3.4
 
 env:
-    - MPI=mpich3
-    - MPI=mpich2
-    - MPI=mpich1
-    - MPI=openmpi
-
-matrix:
-  allow_failures:
-    - python: pypy
-    - python: pypy3
-    - env: MPI=mpich1
-
-branches:
-  only:
-    - master
-    - maint
-
-cache:
-  apt: true
+    - NUMPY_VERSION=1.8 MPI=openmpi
 
 before_install:
     - sudo apt-get update -q
     - sh ./travis-install-mpi.sh $MPI
+    - chmod +x miniconda.sh
+    - ./miniconda.sh -b
     - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
     - conda update --yes conda
 
@@ -42,7 +27,6 @@ install:
     - python setup.py install 
 
 before_script:
-    - sudo hostname localhost
     - MPIEXEC='mpiexec'; PYTHON='python';
     - test $MPI == mpich1 && MPIEXEC='mpirun' || true
     - test $MPI == mpich1 && PYTHON=$(command -v $PYTHON) || true
