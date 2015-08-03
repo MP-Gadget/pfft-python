@@ -23,6 +23,7 @@ install:
     - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
     - source activate test
     - conda install --yes numpy=$NUMPY_VERSION nose cython mpi4py
+    - if [ $TRAVIS_PYTHON_VERSION == 2.6 ]; then conda install --yes argparse; fi
     - python setup.py install > build.log
 
 script:
