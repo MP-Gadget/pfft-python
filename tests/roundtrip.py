@@ -182,10 +182,12 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
         if False:
             print('error', original - input)
         MPI.COMM_WORLD.barrier()
+    if False:
+        print(repr(forward.type), 'forward', "error = ", r2cerr)
+        print(repr(forward.type), 'backward', "error = ", c2rerr)
 
-    print(repr(forward.type), 'forward', "error = ", r2cerr)
-    print(repr(forward.type), 'backward', "error = ", c2rerr)
-
+    r2cerr = MPI.COMM_WORLD.allreduce(r2cerr, MPI.MAX)
+    c2rerr = MPI.COMM_WORLD.allreduce(c2rerr, MPI.MAX)
     if (r2cerr > 5e-4):
         raise LargeError("r2c: %g" % r2cerr)
 
@@ -254,7 +256,7 @@ try:
         if ns.diag:
             for f, e in FAIL:
                 print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4], e)
-    assert len(FAIL) == 0
+        assert len(FAIL) == 0
 except Exception as e:
     print(traceback.format_exc())
     MPI.COMM_WORLD.Abort()
