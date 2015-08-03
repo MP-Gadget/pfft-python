@@ -39,6 +39,10 @@ parser.add_argument('-Nmesh', nargs=3, type=int,
         action='append', metavar=('Nx', 'Ny', 'Nz'), 
         help='size of FFT mesh, default is 29 30 31',
         default=[])
+parser.add_argument('-Nproc', nargs=2, type=int,
+        action='append', metavar=('Nx', 'Ny'), 
+        help='proc mesh',
+        default=[])
 parser.add_argument('-tree', action='store_true', default=False,
         help='Use pfft from source tree, ' +
         'built with setup.py build_ext --inplace')
@@ -200,23 +204,9 @@ if MPI.COMM_WORLD.size == 1:
             [1, 1],
             ]
 else:
-    s = MPI.COMM_WORLD.size
-    a = int(s ** 0.5)
-    while a > 1:
-        if s % a == 0:
-            d = s // a
-            break
-        a = a - 1 
-    nplist = [
-            [s],
-            [1, s],
-            [s, 1],
-            ]
-    if a > 1:
-        nplist += [
-            [a, d],
-            [d, a],
-            ]
+    print ns.Nproc
+    nplist = ns.Nproc
+            
 
 try:
     flags = [
