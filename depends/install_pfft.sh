@@ -1,6 +1,8 @@
 #!/bin/sh -e
 
 PREFIX="$1"
+shift
+OPTIMIZE="$*"
 PFFT_VERSION=1.0.8-alpha-fftw3
 TMP="tmp-pfft-$PFFT_VERSION"
 LOGFILE="build.log"
@@ -28,14 +30,14 @@ cd $TMP
 cd pfft-$PFFT_VERSION
 
 ./configure --prefix=$PREFIX --disable-shared --enable-static  \
---disable-fortran --disable-doc --enable-mpi --enable-sse2 --enable-avx \
+--disable-fortran --disable-doc --enable-mpi ${OPTIMIZE}
 2>&1 | tee $LOGFILE
 
 make -j 4 2>&1 | tee $LOGFILE
 make install 2>&1 | tee $LOGFILE
 
 ./configure --prefix=$PREFIX --enable-single --disable-shared --enable-static  \
---disable-fortran --disable-doc --enable-mpi --enable-sse --enable-avx \
+--disable-fortran --disable-doc --enable-mpi $2 ${OPTIMIZE/--enable-sse2/--enable-sse}
 2>&1 | tee $LOGFILE
 
 make -j 4 2>&1 | tee $LOGFILE

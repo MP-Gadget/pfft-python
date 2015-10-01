@@ -24,11 +24,13 @@ if 'LDSHARED' not in os.environ:
     os.environ['LDSHARED'] = compiler + ' -shared'
 
 def build_pfft():
+    optimize="--enable-sse2"
     line = ('CFLAGS="$CFLAGS -fPIC -fvisibility=hidden" ' +
             'MPICC="%s" ' % compiler +
             'CC="%s" ' % compiler +
             'sh %s/depends/install_pfft.sh ' % package_basedir +
-             dependsdir)
+             dependsdir +
+            ' %s' % optimize)
     if os.path.exists(os.path.join(dependsdir, 
         'lib', 'libpfft.a')):
         return
