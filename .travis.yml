@@ -27,7 +27,7 @@ install:
     - source activate test
     - conda install --yes numpy=$NUMPY_VERSION nose cython mpi4py
     - if [ $TRAVIS_PYTHON_VERSION == 2.6 ]; then conda install --yes argparse; fi
-    - python setup.py install > build.log
+    - python setup.py install
 
 script:
     - mpirun -n 1 python $PWD/tests/roundtrip.py -v -Nproc 1 1 -Nmesh 13 15 16
