@@ -1,37 +1,25 @@
 from distutils.core import setup
 from Cython.Build import cythonize
 from Cython.Distutils import Extension
+from distutils.command.build_ext import build_ext
+
+import glob
 import os
 import os.path
 import numpy
 import mpi4py
 
 package_basedir = os.path.abspath(os.path.dirname(__file__))
-dependsdir = os.path.join(package_basedir, 'build', 'depends')
 
-if 'MPICC' in os.environ:
-    compiler = os.environ['MPICC']
-else:
-    try:
-        compiler = str(mpi4py.get_config()['mpicc'])
-    except:
-        pass
-    compiler = "mpicc"
-
-os.environ['CC'] = compiler
-
-if 'LDSHARED' not in os.environ:
-    os.environ['LDSHARED'] = compiler + ' -shared'
-
-def build_pfft():
+def build_pfft(prefix, compiler, cflags):
     optimize="--enable-sse2"
-    line = ('CFLAGS="$CFLAGS -fPIC -fvisibility=hidden" ' +
+    line = ('CFLAGS="%s -fvisibility=hidden" ' % cflags+
             'MPICC="%s" ' % compiler +
             'CC="%s" ' % compiler +
             'sh %s/depends/install_pfft.sh ' % package_basedir +
-             dependsdir +
+             os.path.abspath(prefix) +
             ' %s' % optimize)
-    if os.path.exists(os.path.join(dependsdir, 
+    if os.path.exists(os.path.join(prefix, 
         'lib', 'libpfft.a')):
         return
 
@@ -40,24 +28,54 @@ def build_pfft():
         raise ValueError("could not build fftw")
 
 def myext(*args):
-    return Extension(*args, 
-        compiler=compiler,
-        include_dirs=["./", 
-        os.path.join(dependsdir, 'include'),
-        mpi4py.get_include(),
-        numpy.get_include(),
-        ],
-        cython_directives = {"embedsignature": True},
-        library_dirs=[
-            os.path.join(dependsdir, 'lib'),
-        ],
-        libraries=["pfft", "pfftf", "fftw3_mpi", "fftw3f_mpi", "fftw3", "fftw3f"])
+    return 
 
 extensions = [
-        myext("pfft.core", ["pfft/core.pyx"]),
         ]
 
-build_pfft()
+class build_ext_subclass(build_ext):
+    user_options = build_ext.user_options + \
+            [
+            ('ldshared', None, "LDSHARED"),
+            ('mpicc', None, 'MPICC')
+            ]
+    def initialize_options(self):
+        try:
+            compiler = str(mpi4py.get_config()['mpicc'])
+        except:
+            pass
+        compiler = "mpicc"
+        self.mpicc = os.environ.get('MPICC', compiler)
+
+        self.ldshared = os.environ.get('LDSHARED', 
+                self.mpicc + ' -shared')
+        build_ext.initialize_options(self)    
+
+    def finalize_options(self):
+        build_ext.finalize_options(self)    
+        self.pfft_build_dir = os.path.join(self.build_temp, 'depends')
+
+        self.include_dirs.insert(0, os.path.join(
+                        self.pfft_build_dir, 'include'))
+
+    def build_extensions(self):
+        # turns out set_executables only works for linker_so, but for compiler_so
+        self.compiler.compiler_so[0] = self.mpicc
+        self.compiler.set_executables(linker_so=self.ldshared)
+        build_pfft(self.pfft_build_dir, self.mpicc, ' '.join(self.compiler.compiler_so[1:]))
+        link_objects = list(glob.glob(os.path.join(self.pfft_build_dir,'lib*/*.a')))
+        self.compiler.set_link_objects(link_objects)
+
+        #for ext in self.extensions:
+        #    ext.depends += link_objects
+
+        build_ext.build_extensions(self)
+
+try:
+    from distutils.command.build_py import build_py_2to3 as build_py
+except ImportError:
+    from distutils.command.build_py import build_py
+
 setup(
     name="pfft-python", version="0.1",
     author="Yu Feng",
@@ -70,7 +88,16 @@ setup(
     install_requires=['cython', 'numpy'],
     packages= ['pfft'],
     requires=['numpy'],
-    ext_modules = cythonize(extensions,
-        include_path=[mpi4py.get_include()]),
+    ext_modules = cythonize(Extension( 
+                "pfft.core", 
+                ["pfft/core.pyx"],
+                include_dirs=["./", 
+                numpy.get_include(),
+                ],
+                cython_directives = {"embedsignature": True}
+                )),
+    cmdclass = {
+        "build_py":build_py,
+        "build_ext": build_ext_subclass}
 )
 
