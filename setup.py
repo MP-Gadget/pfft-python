@@ -63,7 +63,16 @@ class build_ext_subclass(build_ext):
         self.compiler.compiler_so[0] = self.mpicc
         self.compiler.set_executables(linker_so=self.ldshared)
         build_pfft(self.pfft_build_dir, self.mpicc, ' '.join(self.compiler.compiler_so[1:]))
-        link_objects = list(glob.glob(os.path.join(self.pfft_build_dir,'lib*/*.a')))
+        link_objects = [ 
+                'libpfft.a', 
+                'libpfftf.a',
+                'libfftw3_mpi.a', 
+                'libfftw3.a', 
+                'libfftw3f_mpi.a', 
+                'libfftw3f.a', 
+                ]
+        
+        link_objects = [list(glob.glob(os.path.join(self.pfft_build_dir, '*', i)))[0] for i in link_objects]
         self.compiler.set_link_objects(link_objects)
 
         #for ext in self.extensions:
@@ -77,7 +86,7 @@ except ImportError:
     from distutils.command.build_py import build_py
 
 setup(
-    name="pfft-python", version="0.1.1",
+    name="pfft-python", version="0.1.2",
     author="Yu Feng",
     author_email="rainwoodman@gmail.com",
     description="python binding of PFFT, a massively parallel FFT library",
