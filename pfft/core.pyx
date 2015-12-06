@@ -442,13 +442,23 @@ cdef class Partition(object):
         self.n = numpy.array(n_)
         self.Ndim = len(self.n)
 
-        self.i_edges = self._build_edges(self.local_i_start,
+        # Notice that local_i_start and i_edges can be different
+        # due to https://github.com/mpip/pfft/issues/22
+        #
+        # i_edges are used for domain decomposition, thus
+        # supposed to be non-decreasing, so we calculate
+        # them from local_ni.
+
+        self.i_edges = self._build_edges(self.local_ni,
                 self.flags & Flags.PFFT_TRANSPOSED_IN 
                 )
-        self.o_edges = self._build_edges(self.local_o_start,
+        self.o_edges = self._build_edges(self.local_no,
                 self.flags & Flags.PFFT_TRANSPOSED_OUT
                 )
 
+        # it is alright to use the 'zero' local_i_start
+        # in slices, since the local_ni is is also zero
+        # and would give a zero size slice anyways.
         self.local_i_slice = tuple(
                 [slice(start, start + n)
                 for start, n in zip(
@@ -459,7 +469,7 @@ cdef class Partition(object):
                     self.local_o_start, self.local_no)])
 
 
-    def _build_edges(self, numpy.intp_t[::1] local_start, transposed):
+    def _build_edges(self, numpy.intp_t[::1] local_n, transposed):
         cdef numpy.intp_t[::1] start_dim
         cdef numpy.intp_t tmp
         edges = []
@@ -473,12 +483,17 @@ cdef class Partition(object):
                 d1 = d
             start_dim = numpy.empty((np[d1] + 1), dtype='intp')
             start_dim[0] = 0
-            start_dim[np[d1]] = self.n[d1]
             if d1 < self.procmesh.Ndim:
-                tmp = local_start[d]
+                tmp = local_n[d]
                 MPI.MPI_Allgather(&tmp, sizeof(numpy.intp_t), MPI.MPI_BYTE, 
-                        &start_dim[0], sizeof(numpy.intp_t), MPI.MPI_BYTE, 
+                        &start_dim[1], sizeof(numpy.intp_t), MPI.MPI_BYTE, 
                         self.procmesh.comm_col[d1])
+            else:
+                start_dim[1] = local_n[d1]
+
+            start_dim_a = numpy.array(start_dim, copy=False)
+            start_dim_a[:] = numpy.cumsum(start_dim_a)
+
             edges.append(numpy.array(start_dim))
         return edges
 
