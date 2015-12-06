@@ -86,7 +86,7 @@ except ImportError:
     from distutils.command.build_py import build_py
 
 setup(
-    name="pfft-python", version="0.1.2",
+    name="pfft-python", version="0.1.3",
     author="Yu Feng",
     author_email="rainwoodman@gmail.com",
     description="python binding of PFFT, a massively parallel FFT library",
