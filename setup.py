@@ -25,7 +25,7 @@ def build_pfft(prefix, compiler, cflags):
 
     ret=os.system(line)
     if ret != 0:
-        raise ValueError("could not build fftw")
+        raise ValueError("could not build fftw; check MPICC?")
 
 def myext(*args):
     return 
