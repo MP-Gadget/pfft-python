@@ -248,6 +248,20 @@ PFFT_PLAN_FUNC[:] = [
     <pfft_plan_func> pfftf_plan_r2r,
         ]
 
+ctypedef void (*pfft_free_plan_func) (void * plan)
+cdef pfft_free_plan_func PFFT_FREE_PLAN_FUNC [8]
+
+PFFT_FREE_PLAN_FUNC[:] = [
+    <pfft_free_plan_func> pfft_destroy_plan,
+    <pfft_free_plan_func> pfft_destroy_plan,
+    <pfft_free_plan_func> pfft_destroy_plan,
+    <pfft_free_plan_func> pfft_destroy_plan,
+    <pfft_free_plan_func> pfftf_destroy_plan,
+    <pfft_free_plan_func> pfftf_destroy_plan,
+    <pfft_free_plan_func> pfftf_destroy_plan,
+    <pfft_free_plan_func> pfftf_destroy_plan,
+        ]
+
 ctypedef void (*pfft_execute_func) ( pfft_plan plan, void * input, void * output)
 cdef pfft_execute_func PFFT_EXECUTE_FUNC [8]
 
@@ -474,6 +488,8 @@ cdef class Partition(object):
         cdef numpy.intp_t tmp
         edges = []
         cdef int d
+        cdef int d1
+
         np = numpy.ones(self.Ndim, dtype='int')
         np[:self.procmesh.Ndim] = self.procmesh.np
         for d in range(self.Ndim):
@@ -664,6 +680,8 @@ cdef class Plan(object):
     cdef readonly object type
     cdef readonly object direction
     cdef readonly int inplace
+    cdef pfft_free_plan_func free_func
+
     def __init__(self, Partition partition, direction, 
             LocalBuffer i, LocalBuffer o=None, 
             type=None, flags=None):
@@ -715,6 +733,7 @@ cdef class Plan(object):
                 procmesh.comm_cart,
                 self.direction,
                 flags)
+        self.free_func = PFFT_FREE_PLAN_FUNC[self.type]
 
     def execute(self, LocalBuffer i, LocalBuffer o=None):
         """ execute a plan.
@@ -739,5 +758,8 @@ cdef class Plan(object):
                 'direction = %s' % repr(self.direction),
                 'inplace = %s' % repr(self.inplace),
                 ]) + ")"
+    def __dealloc__(self):
+        self.free_func(self.plan)
+ 
 pfft_init()
 #print 'init pfft'
