@@ -39,6 +39,7 @@ cdef extern from 'pfft.h':
     int _PFFT_PADDED_C2R "PFFT_PADDED_C2R"
 
     void pfft_init()
+    void pfftf_init()
     void pfft_cleanup()
 
     ctypedef void * pfft_plan
@@ -762,4 +763,5 @@ cdef class Plan(object):
         self.free_func(self.plan)
  
 pfft_init()
+pfftf_init()
 #print 'init pfft'
