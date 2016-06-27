@@ -36,7 +36,6 @@ extensions = [
 class build_ext_subclass(build_ext):
     user_options = build_ext.user_options + \
             [
-            ('ldshared', None, "LDSHARED"),
             ('mpicc', None, 'MPICC')
             ]
     def initialize_options(self):
@@ -47,8 +46,6 @@ class build_ext_subclass(build_ext):
         compiler = "mpicc"
         self.mpicc = os.environ.get('MPICC', compiler)
 
-        self.ldshared = os.environ.get('LDSHARED', 
-                self.mpicc + ' -shared')
         build_ext.initialize_options(self)    
 
     def finalize_options(self):
@@ -61,7 +58,7 @@ class build_ext_subclass(build_ext):
     def build_extensions(self):
         # turns out set_executables only works for linker_so, but for compiler_so
         self.compiler.compiler_so[0] = self.mpicc
-        self.compiler.set_executables(linker_so=self.ldshared)
+        self.compiler.linker_so[0] = self.mpicc
         build_pfft(self.pfft_build_dir, self.mpicc, ' '.join(self.compiler.compiler_so[1:]))
         link_objects = [ 
                 'libpfft.a', 
