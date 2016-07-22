@@ -6,7 +6,7 @@ Python binding of PFFT. (github.com/mpip/pfft)
 PFFT is a massively parallel Fast Fourier Transform library. For its
 performance, see:
 
-    https://www-user.tu-chemnitz.de/~mpip/software.php.en
+    https://www-user.tu-chemnitz.de/~potts/workgroup/pippig/software.php.en
 
 This is the python binding of PFFT. 
 
