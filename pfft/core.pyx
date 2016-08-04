@@ -525,7 +525,7 @@ cdef class Partition(object):
                     'flags = %s' % repr(self.flags),
                     'type = %s' % repr(self.type),
                     ]) + ')'
-                
+
     def transpose_d(self, d):
         r = len(self.procmesh.np)
         if d >= 1 and d < r + 1:
