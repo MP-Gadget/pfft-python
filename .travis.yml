@@ -13,7 +13,7 @@ env:
 
 cache:
     directories:
-        - $HOME/build/rainwoodman/pfft-python/build/depends
+        - $TRAVIS_BUILD_DIR/build/*/depends
 
 before_install:
     - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
