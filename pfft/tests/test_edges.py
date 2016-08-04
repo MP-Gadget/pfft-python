@@ -8,6 +8,7 @@ from numpy.testing import assert_array_equal
 from numpy.testing.decorators import skipif
 from numpy.testing.decorators import knownfailureif
 
+
 def MPIWorld(NTask):
     if MPI.COMM_WORLD.size < NTask:
         return knownfailureif(True, "Test Failed because the world is too small")
