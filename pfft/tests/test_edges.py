@@ -1,33 +1,13 @@
 from __future__ import absolute_import
-from mpi4py import MPI
-
 import pfft
 
 import numpy
 from numpy.testing import assert_array_equal
-from numpy.testing.decorators import skipif
-from numpy.testing.decorators import knownfailureif
 
 
-def MPIWorld(NTask):
-    if MPI.COMM_WORLD.size < NTask:
-        return knownfailureif(True, "Test Failed because the world is too small")
+from mpi4py_test import MPIWorld
 
-    color = MPI.COMM_WORLD.rank >= NTask
-    comm = MPI.COMM_WORLD.Split(color)
-
-    if(color > 0):
-        return skipif(True, "Idling ranks")
-
-    def dec(func):
-        def wrapped(*args, **kwargs):
-            kwargs['comm'] = comm
-            return func(*args, **kwargs)
-        wrapped.__name__ = func.__name__
-        return wrapped
-    return dec
-
-@MPIWorld(NTask=3)
+@MPIWorld(NTask=3, required=3)
 def test_edges(comm):
     procmesh = pfft.ProcMesh(np=[3,], comm=comm)
 
@@ -38,7 +18,7 @@ def test_edges(comm):
     assert_array_equal(partition.i_edges[0], [0, 2, 4, 4])
     assert_array_equal(partition.i_edges[1], [0, 4])
 
-@MPIWorld(NTask=1)
+@MPIWorld(NTask=1, required=1)
 def test_correct_single(comm):
     procmesh = pfft.ProcMesh(np=[1,], comm=comm)
 
@@ -55,7 +35,7 @@ def test_correct_single(comm):
 
     assert_array_equal(correct, buffer2.view_output())
 
-@MPIWorld(NTask=4)
+@MPIWorld(NTask=4, required=4)
 def test_correct_multi(comm):
     procmesh = pfft.ProcMesh(np=[4,], comm=comm)
 

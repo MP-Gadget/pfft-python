@@ -12,7 +12,7 @@ env:
 
 cache:
     directories:
-        - $TRAVIS_BUILD_DIR/build/*/depends
+        - $TRAVIS_BUILD_DIR/tmp-pfft*
 
 before_install:
     - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
