@@ -14,3 +14,7 @@ def split_size_2d(s):
             break
         a = a - 1 
     return a, d
+
+from numpy.testing import Tester
+test = Tester().test
+bench = Tester().bench

@@ -734,6 +734,9 @@ cdef class Plan(object):
                 procmesh.comm_cart,
                 self.direction,
                 flags)
+        if not self.plan:
+            raise ValueError("Plan is not created")
+
         self.free_func = PFFT_FREE_PLAN_FUNC[self.type]
 
     def execute(self, LocalBuffer i, LocalBuffer o=None):
@@ -760,7 +763,8 @@ cdef class Plan(object):
                 'inplace = %s' % repr(self.inplace),
                 ]) + ")"
     def __dealloc__(self):
-        self.free_func(self.plan)
+        if self.plan:
+            self.free_func(self.plan)
  
 pfft_init()
 pfftf_init()

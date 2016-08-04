@@ -91,7 +91,7 @@ setup(
     #package_dir = {'pfft': 'pfft'},
     zip_safe=False,
     install_requires=['cython', 'numpy'],
-    packages= ['pfft'],
+    packages= ['pfft', 'pfft.tests'],
     requires=['numpy'],
     ext_modules = cythonize(Extension( 
                 "pfft.core", 
