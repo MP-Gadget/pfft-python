@@ -3,13 +3,12 @@
 
 language: python
 python:
-    - 2.6
     - 2.7
-    - 3.3
     - 3.4
+    - 3.5
 
 env:
-    - NUMPY_VERSION=1.8 
+    - NUMPY_VERSION=1.11.1
 
 cache:
     directories:
@@ -25,8 +24,7 @@ before_install:
 install:
     - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
     - source activate test
-    - conda install --yes numpy=$NUMPY_VERSION nose cython mpi4py
-    - if [ $TRAVIS_PYTHON_VERSION == 2.6 ]; then conda install --yes argparse; fi
+    - conda install --yes numpy=$NUMPY_VERSION nose cython mpi4py=2.0.0
     - python setup.py install
 
 script:
