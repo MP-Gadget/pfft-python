@@ -20,7 +20,6 @@ before_install:
     - ./miniconda.sh -b -p $HOME/miniconda
     - export PATH=$HOME/miniconda/bin:$PATH
     - conda update --yes conda
-    - pip install mpi4py_test
 
 install:
     - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
@@ -29,6 +28,7 @@ install:
     - python setup.py install
 
 script:
+    - pip install mpi4py_test
     - mpirun -n 1 python $PWD/tests/roundtrip.py -v -Nproc 1 1 -Nmesh 13 15 16
     - mpirun -n 2 python $PWD/tests/roundtrip.py -v -Nproc 2 1 -Nproc 1 2 -Nmesh 13 15 16
     - mpirun -n 4 python $PWD/tests/roundtrip.py -v -Nproc 2 2 -Nmesh 13 15 16
