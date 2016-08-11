@@ -12,6 +12,7 @@ import numpy
 cimport numpy
 from libc.stdlib cimport free, calloc
 from libc.string cimport memset
+
 numpy.import_array()
 
 ####
@@ -276,7 +277,6 @@ PFFT_EXECUTE_FUNC[:] = [
     <pfft_execute_func> pfftf_execute_dft_c2r,
     <pfft_execute_func> pfftf_execute_r2r,
         ]
-
 cdef int PFFT_NPY_TYPE[8]
 
 PFFT_NPY_TYPE[:] = [
@@ -290,6 +290,8 @@ PFFT_NPY_TYPE[:] = [
     numpy.NPY_FLOAT,
         ]
 
+
+
 cdef class ProcMesh(object):
     """
     The topology of the MPI ranks. (procmesh)
@@ -302,7 +304,7 @@ cdef class ProcMesh(object):
         The rank of current process in the procmesh 
     np          : array_like
         The shape of the proc mesh. 
-    Ndim        : int
+    ndim        : int
         size of the proc mesh
     rank        : int
         MPI rank
@@ -311,7 +313,7 @@ cdef class ProcMesh(object):
     cdef readonly numpy.ndarray this # nd rank of the current process
     cdef readonly numpy.ndarray np
     cdef readonly int rank
-    cdef readonly int Ndim
+    cdef readonly int ndim
     cdef MPI.MPI_Comm * comm_col
 
     def __init__(self, np, comm=None):
@@ -353,10 +355,10 @@ cdef class ProcMesh(object):
             raise RuntimeError("Failed to create proc mesh")
 
         self.np = numpy.array(np_)
-        self.Ndim = len(self.np)
+        self.ndim = len(self.np)
 
         # a buffer used for various purposes 
-        cdef int[::1] junk = numpy.empty(self.Ndim, 'int32')
+        cdef int[::1] junk = numpy.empty(self.ndim, 'int32')
 
         # now fill `this'
         self.this = numpy.array(np, 'int32')
@@ -365,8 +367,8 @@ cdef class ProcMesh(object):
                 <int*>self.this.data);
 
         # build the comm_col sub communicators
-        self.comm_col = <MPI.MPI_Comm*>calloc(self.Ndim, sizeof(MPI.MPI_Comm))
-        for i in range(self.Ndim):
+        self.comm_col = <MPI.MPI_Comm*>calloc(self.ndim, sizeof(MPI.MPI_Comm))
+        for i in range(self.ndim):
             junk[:] = 0
             junk[i] = 1
             if MPI.MPI_SUCCESS != MPI.MPI_Cart_sub(self.comm_cart, &junk[0],
@@ -379,19 +381,23 @@ cdef class ProcMesh(object):
             MPI.MPI_Comm_free(&self.comm_cart)
             pass
         if self.comm_col != NULL:
-            for i in range(self.Ndim):
+            for i in range(self.ndim):
                 if self.comm_col[i]:
                     MPI.MPI_Comm_free(&self.comm_col[i])
             free(self.comm_col)
 
 cdef class Partition(object):
     cdef readonly size_t alloc_local
-    cdef readonly int Ndim
+    cdef readonly int ndim
     cdef readonly numpy.ndarray n
     cdef readonly numpy.ndarray local_ni
     cdef readonly numpy.ndarray local_i_start
     cdef readonly numpy.ndarray local_no
     cdef readonly numpy.ndarray local_o_start
+    cdef readonly numpy.ndarray local_i_strides
+    cdef readonly numpy.ndarray local_i_shape
+    cdef readonly numpy.ndarray local_o_strides
+    cdef readonly numpy.ndarray local_o_shape
     cdef readonly object local_i_slice
     cdef readonly object local_o_slice
     cdef readonly object type
@@ -399,6 +405,19 @@ cdef class Partition(object):
     cdef readonly ProcMesh procmesh
     cdef readonly object i_edges
     cdef readonly object o_edges
+    cdef readonly numpy.dtype i_dtype
+    cdef readonly numpy.dtype o_dtype
+
+    i_dtypes = [
+            'complex128', 'float64', 'complex128', 'float64',
+            'complex64', 'float32', 'complex64', 'float32',
+             ]
+
+    o_dtypes = [
+                'complex128', 'complex128', 'float64', 'float64',
+                'complex64', 'complex64', 'float32', 'float32',
+                 ]
+
     def __init__(self, type, n, ProcMesh procmesh, flags):
         """ A data partition object 
             type is the type of the transform, r2c, c2r, c2c or r2r see Type.
@@ -425,9 +444,10 @@ cdef class Partition(object):
         cdef numpy.intp_t[::1] local_no
         cdef numpy.intp_t[::1] local_i_start
         cdef numpy.intp_t[::1] local_o_start
+        cdef numpy.intp_t[::1] local_i_strides
+        cdef numpy.intp_t[::1] local_o_strides
 
-        local_ni, local_no, local_i_start, local_o_start = \
-                numpy.empty((4, n_.shape[0]), 'intp')
+        local_ni, local_no, local_i_start, local_o_start = numpy.empty((4, n_.shape[0]), 'intp')
 
         if len(n_) <= len(procmesh.np):
             raise ValueError("ProcMesh (%d) shall have less dimentions than Mesh (%d)" % (len(procmesh.np), len(n_)))
@@ -455,7 +475,24 @@ cdef class Partition(object):
         self.local_i_start = numpy.array(local_i_start)
         self.local_o_start = numpy.array(local_o_start)
         self.n = numpy.array(n_)
-        self.Ndim = len(self.n)
+        self.ndim = len(self.n)
+
+        self.i_dtype = numpy.dtype(self.i_dtypes[self.type])
+        self.o_dtype = numpy.dtype(self.o_dtypes[self.type])
+
+        self.local_i_shape, self.local_i_strides = \
+            self._build_shape_strides(
+                self.local_i_start,
+                self.local_ni,
+                self.flags & Flags.PFFT_TRANSPOSED_IN)
+        self.local_i_strides *= self.i_dtype.itemsize
+
+        self.local_o_shape, self.local_o_strides =\
+            self._build_shape_strides(
+                self.local_o_start,
+                self.local_no,
+                self.flags & Flags.PFFT_TRANSPOSED_OUT)
+        self.local_o_strides *= self.o_dtype.itemsize
 
         # Notice that local_i_start and i_edges can be different
         # due to https://github.com/mpip/pfft/issues/22
@@ -465,7 +502,7 @@ cdef class Partition(object):
         # them from local_ni.
 
         self.i_edges = self._build_edges(self.local_ni,
-                self.flags & Flags.PFFT_TRANSPOSED_IN 
+                self.flags & Flags.PFFT_TRANSPOSED_IN
                 )
         self.o_edges = self._build_edges(self.local_no,
                 self.flags & Flags.PFFT_TRANSPOSED_OUT
@@ -483,24 +520,62 @@ cdef class Partition(object):
                 for start, n in zip(
                     self.local_o_start, self.local_no)])
 
+    def _build_shape_strides(self, numpy.intp_t[::1] local_start, numpy.intp_t[::1] local_n, transposed):
+        cdef int d
+        cdef numpy.intp_t[::1] axismapping
+        cdef numpy.intp_t[::1] strides
+        cdef numpy.intp_t[::1] shape
+
+        strides = numpy.empty(local_n.shape[0], dtype='intp')
+        shape = numpy.empty(local_n.shape[0], dtype='intp')
+
+        # invaxismapping[d] stores the untransposed axis for d
+        axismapping = numpy.arange(self.ndim, dtype='intp')
+        if transposed:
+            first = axismapping[:self.procmesh.ndim + 1]
+            first[:] = numpy.roll(first, -1)
+        #    print numpy.array(axismapping)
+        for d in range(self.ndim):
+            shape[d] = local_n[d]
+
+        # strides are transposed
+        strides[axismapping[self.ndim - 1]] = 1
+
+        #print 'local_n', numpy.array(local_n)
+        for d in range(self.ndim - 2, -1, -1):
+            d0 = axismapping[d]
+            d1 = axismapping[d + 1]
+            strides[d0] = local_n[d1] * strides[d1]
+            #print d0, d1, local_n[d1], strides[d1], '=', strides[d0]
+
+        for d in range(self.ndim):
+            if shape[d] > self.n[d] - local_start[d]:
+                shape[d] = self.n[d] - local_start[d]
+
+        return numpy.array(shape), numpy.array(strides)
 
     def _build_edges(self, numpy.intp_t[::1] local_n, transposed):
         cdef numpy.intp_t[::1] start_dim
+        cdef numpy.intp_t[::1] invaxismapping
         cdef numpy.intp_t tmp
         edges = []
         cdef int d
         cdef int d1
 
-        np = numpy.ones(self.Ndim, dtype='int')
-        np[:self.procmesh.Ndim] = self.procmesh.np
-        for d in range(self.Ndim):
-            if transposed:
-                d1 = self.transpose_d(d)
-            else:
-                d1 = d
+        # invaxismapping[d] stores the transposed axis for d
+        invaxismapping = numpy.arange(self.ndim, dtype='intp')
+        if transposed:
+            first = invaxismapping[:self.procmesh.ndim + 1]
+            first[:] = numpy.roll(first, 1)
+
+        np = numpy.ones(self.ndim, dtype='int')
+        np[:self.procmesh.ndim] = self.procmesh.np
+        for d in range(self.ndim):
+            d1 = invaxismapping[d]
+
             start_dim = numpy.empty((np[d1] + 1), dtype='intp')
             start_dim[0] = 0
-            if d1 < self.procmesh.Ndim:
+            if d1 < self.procmesh.ndim:
                 tmp = local_n[d]
                 MPI.MPI_Allgather(&tmp, sizeof(numpy.intp_t), MPI.MPI_BYTE, 
                         &start_dim[1], sizeof(numpy.intp_t), MPI.MPI_BYTE, 
@@ -526,55 +601,12 @@ cdef class Partition(object):
                     'type = %s' % repr(self.type),
                     ]) + ')'
 
-    def transpose_d(self, d):
-        r = len(self.procmesh.np)
-        if d >= 1 and d < r + 1:
-            return d - 1
-        if d == 0:
-            return r
-        return d
-    def transpose_list(self, list):
-        """ migrate shape to the transposed ordering """
-        assert len(list) == len(self.n)
-        r = len(self.procmesh.np)
-        n0 = list[0] 
-        newlist = list[1:r+1]
-        newlist.append(n0)
-        newlist += list[r+1:]
-        return newlist
-    def transpose_shape(self, shape):
-        """ migrate shape to the transposed ordering """
-        assert len(shape) == len(self.n)
-        r = len(self.procmesh.np)
-        n0 = shape[0] 
-        newshape = numpy.copy(shape)
-        newshape[:r] = shape[1:r+1]
-        newshape[r] = n0
-        newshape[r+1:] = shape[r+1:]
-        return newshape
-    def restore_transposed_array(self, array):
-        """ transposed array from the 'transposed ordering' to the ordinary
-        ordering; used by LocalBuffer to return an ordinary looking ndarray"""
-        oldaxes = numpy.arange(len(self.n))
-        newaxes = self.transpose_shape(oldaxes)
-        revert = oldaxes.copy()
-        revert[newaxes] = numpy.arange(len(self.n))
-        return array.transpose(revert)
-
 cdef class LocalBuffer:
     cdef void * ptr
-    property buffer:
-        def __get__(self):
-            cdef numpy.intp_t shape[1]
-            shape[0] = self.partition.alloc_local * 2
-            cdef numpy.ndarray buffer = numpy.PyArray_SimpleNewFromData(1, shape, 
-                    PFFT_NPY_TYPE[self.partition.type], self.ptr)
-            numpy.set_array_base(buffer, self)
-            return buffer
 
     cdef readonly Partition partition
 
-    def __init__(self, Partition partition):
+    def __init__(self, partition):
         """ The local portion of the distributed array used by PFFT 
 
             see the documents of view_input, view_output
@@ -585,92 +617,33 @@ cdef class LocalBuffer:
         elif PFFT_NPY_TYPE[self.partition.type] == numpy.NPY_FLOAT:
             self.ptr = pfftf_alloc_complex(partition.alloc_local)
 
-    def _view(self, dtype, local_n, local_start, roll, padded):
-
-        cdef numpy.ndarray a = numpy.array(self.buffer, copy=False)
-
-        shape = local_n.copy()
-        a = a.view(dtype=dtype)
-        
-        if numpy.iscomplexobj(a):
-            # complex array needs no padding
-            shape2 = shape
-            pass
-        else:
-            # real array needs to worry about padding
-            shape2 = shape.copy()
-            if padded:
-                global_end = local_start + local_n
-                if global_end[-1] > self.partition.n[-1]:
-                    # This chunk is the last one along the conjugated axis
-                    # cut it such that the array shape looks correct (padding is
-                    # hidden from user)
-                    shape2[-1] = self.partition.n[-1] - local_start[-1]
-                #print shape, shape2
-        if roll:
-            #shift = len(self.partition.procmesh.np) - len(self.partition.n)
-            shape = self.partition.transpose_shape(shape)
-            shape2 = self.partition.transpose_shape(shape2)
-
-        sel = [slice(0, s) for s in shape2]
-        a = a[:numpy.product(shape)]
-        a = a.reshape(shape)
-        a = a[sel]
-        #print <numpy.intp_t> a.data, <numpy.intp_t> self.ptr
-        assert <numpy.intp_t> a.data == <numpy.intp_t> self.ptr
-        if roll:
-            a = self.partition.restore_transposed_array(a)
-
-        cdef numpy.dtype dt = a.dtype
-        a = numpy.PyArray_New(numpy.ndarray, a.ndim, a.shape, 
-                dt.type_num, a.strides, 
+    def view_input(self):
+        cdef numpy.dtype dt = self.partition.i_dtype
+        cdef numpy.ndarray a = numpy.PyArray_New(numpy.ndarray,
+                self.partition.ndim,
+                <numpy.intp_t*>self.partition.local_i_shape.data,
+                dt.type_num,
+                <numpy.intp_t*>self.partition.local_i_strides.data,
                 self.ptr, dt.itemsize, numpy.NPY_BEHAVED, None)
 
         numpy.set_array_base(a, self)
+
         return a
 
-    def view_input(self):
-        """ return the buffer as a numpy array, the dtype and shape
-            are for the input of the transform
-
-            padding is opaque; the returned array has removed the padding column.
-            PFFT_TRANSPOSED_IN does not affect the ordering of the axes in
-            the returned array. (this is achieved via numpy.transpose)
-
-            The base attribute of the returned array points back to the LocalBuffer
-            object.
-        """
-        dtypes = [
-                'complex128', 'float64', 'complex128', 'float64',
-                'complex64', 'float32', 'complex64', 'float32',
-                 ]
-        return self._view(dtypes[self.partition.type],
-                self.partition.local_ni,
-                self.partition.local_i_start,
-                self.partition.flags & Flags.PFFT_TRANSPOSED_IN, 
-                self.partition.flags & Flags.PFFT_PADDED_R2C, 
-                )
     def view_output(self):
-        """ return the buffer as a numpy array, the dtype and shape
-            are for the output of the transform
+        cdef numpy.dtype dt = self.partition.o_dtype
 
-            padding is opaque; the returned array has removed the padding column.
-            PFFT_TRANSPOSED_OUT does not affect the ordering of the axes in
-            the returned array. (this is achieved via numpy.transpose)
+        cdef numpy.ndarray a = numpy.PyArray_New(numpy.ndarray,
+                self.partition.ndim,
+                <numpy.intp_t*>self.partition.local_o_shape.data,
+                dt.type_num, <numpy.intp_t*>
+                    self.partition.local_o_strides.data,
+                self.ptr, dt.itemsize, numpy.NPY_BEHAVED, None)
 
-            The base attribute of the returned array points back to the LocalBuffer
-            object.
-        """
-        dtypes = [
-                'complex128', 'complex128', 'float64', 'float64',
-                'complex64', 'complex64', 'float32', 'float32',
-                 ]
-        return self._view(dtypes[self.partition.type],
-                self.partition.local_no,
-                self.partition.local_o_start,
-                self.partition.flags & Flags.PFFT_TRANSPOSED_OUT, 
-                self.partition.flags & Flags.PFFT_PADDED_C2R, 
-                )
+        numpy.set_array_base(a, self)
+
+        return a
+
 
     def __dealloc__(self):
         pfft_free(self.ptr)

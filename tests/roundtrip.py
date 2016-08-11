@@ -234,6 +234,9 @@ try:
             test_roundtrip_3d(procmesh, *(param[1:]))
             PASS.append(param)
         except LargeError as e:
+            if ns.verbose:
+                f = param
+                print("Failed", e)
             FAIL.append((param, e))
 
     if MPI.COMM_WORLD.rank == 0:
