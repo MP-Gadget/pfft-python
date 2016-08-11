@@ -25,6 +25,7 @@ install:
     - source activate test
     - conda install --yes numpy=$NUMPY_VERSION nose cython mpi4py=2.0.0
     - python setup.py install
+    - ls $TRAVIS_BUILD_DIR/
 
 script:
     - pip install mpi4py_test
