@@ -1,3 +1,5 @@
+from .version import __version__
+
 from .core import *
 
 def split_size_2d(s):

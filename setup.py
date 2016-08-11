@@ -82,8 +82,18 @@ try:
 except ImportError:
     from distutils.command.build_py import build_py
 
+def find_version(path):
+    import re
+    # path shall be a plain ascii text file.
+    s = open(path, 'rt').read()
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              s, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Version not found")
+
 setup(
-    name="pfft-python", version="0.1.5",
+    name="pfft-python", version=find_version("pfft/version.py"),
     author="Yu Feng",
     author_email="rainwoodman@gmail.com",
     description="python binding of PFFT, a massively parallel FFT library",
