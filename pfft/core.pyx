@@ -6,8 +6,8 @@
           University of California Berkeley (2014)
 
 """
-from mpi4py import MPI as pyMPI
-cimport libmpi as MPI
+from mpi4py import MPI
+cimport libmpi as cMPI
 import numpy
 cimport numpy
 from libc.stdlib cimport free, calloc
@@ -65,79 +65,79 @@ cdef extern from 'pfft.h':
 
     pfft_plan pfft_plan_dft(
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
-            MPI.MPI_Comm comm_cart,
+            cMPI.MPI_Comm ccart,
             int sign, unsigned pfft_flags)
 
     pfft_plan pfft_plan_dft_r2c(
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
-            MPI.MPI_Comm comm_cart,
+            cMPI.MPI_Comm ccart,
             int sign, unsigned pfft_flags)
 
     pfft_plan pfft_plan_dft_c2r(
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
-            MPI.MPI_Comm comm_cart,
+            cMPI.MPI_Comm ccart,
             int sign, unsigned pfft_flags)
 
     pfft_plan pfft_plan_r2r(
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
-            MPI.MPI_Comm comm_cart,
+            cMPI.MPI_Comm ccart,
             int sign, unsigned pfft_flags)
 
     pfft_plan pfftf_plan_dft(
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
-            MPI.MPI_Comm comm_cart,
+            cMPI.MPI_Comm ccart,
             int sign, unsigned pfft_flags)
 
     pfft_plan pfftf_plan_dft_r2c(
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
-            MPI.MPI_Comm comm_cart,
+            cMPI.MPI_Comm ccart,
             int sign, unsigned pfft_flags)
 
     pfft_plan pfftf_plan_dft_c2r(
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
-            MPI.MPI_Comm comm_cart,
+            cMPI.MPI_Comm ccart,
             int sign, unsigned pfft_flags)
 
     pfft_plan pfftf_plan_r2r(
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
-            MPI.MPI_Comm comm_cart,
+            cMPI.MPI_Comm ccart,
             int sign, unsigned pfft_flags)
 
-    int pfft_create_procmesh(int rnk_n, MPI.MPI_Comm comm, int *np, 
-            MPI.MPI_Comm * comm_cart)
+    int pfft_create_procmesh(int rnk_n, cMPI.MPI_Comm comm, int *np, 
+            cMPI.MPI_Comm * ccart)
 
-    int pfftf_create_procmesh(int rnk_n, MPI.MPI_Comm comm, int *np, 
-            MPI.MPI_Comm * comm_cart)
+    int pfftf_create_procmesh(int rnk_n, cMPI.MPI_Comm comm, int *np, 
+            cMPI.MPI_Comm * ccart)
 
-    numpy.intp_t pfft_local_size_dft(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+    numpy.intp_t pfft_local_size_dft(int rnk_n, numpy.intp_t * n, cMPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
 
-    numpy.intp_t pfft_local_size_dft_r2c(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+    numpy.intp_t pfft_local_size_dft_r2c(int rnk_n, numpy.intp_t * n, cMPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
 
-    numpy.intp_t pfft_local_size_dft_c2r(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+    numpy.intp_t pfft_local_size_dft_c2r(int rnk_n, numpy.intp_t * n, cMPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
 
-    numpy.intp_t pfft_local_size_r2r(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+    numpy.intp_t pfft_local_size_r2r(int rnk_n, numpy.intp_t * n, cMPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
 
-    numpy.intp_t pfftf_local_size_dft(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+    numpy.intp_t pfftf_local_size_dft(int rnk_n, numpy.intp_t * n, cMPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
 
-    numpy.intp_t pfftf_local_size_dft_r2c(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+    numpy.intp_t pfftf_local_size_dft_r2c(int rnk_n, numpy.intp_t * n, cMPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
 
-    numpy.intp_t pfftf_local_size_dft_c2r(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+    numpy.intp_t pfftf_local_size_dft_c2r(int rnk_n, numpy.intp_t * n, cMPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
 
-    numpy.intp_t pfftf_local_size_r2r(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+    numpy.intp_t pfftf_local_size_r2r(int rnk_n, numpy.intp_t * n, cMPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
 
@@ -217,7 +217,7 @@ class Type(int):
         d = self.__class__.__dict__
         return 'and'.join([k for k in d.keys() if k.startswith('PFFT') and (d[k] == self)])
 
-ctypedef numpy.intp_t (*pfft_local_size_func)(int rnk_n, numpy.intp_t * n, MPI.MPI_Comm comm, int
+ctypedef numpy.intp_t (*pfft_local_size_func)(int rnk_n, numpy.intp_t * n, cMPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
 cdef pfft_local_size_func PFFT_LOCAL_SIZE_FUNC [8]
@@ -235,7 +235,7 @@ PFFT_LOCAL_SIZE_FUNC[:] = [
 
 ctypedef pfft_plan (*pfft_plan_func) (
             int rnk_n, numpy.intp_t *n, void * input, void * output, 
-            MPI.MPI_Comm comm_cart,
+            cMPI.MPI_Comm ccart,
             int sign, unsigned pfft_flags)
 cdef pfft_plan_func PFFT_PLAN_FUNC [8]
 
@@ -298,8 +298,10 @@ cdef class ProcMesh(object):
 
     Attributes
     ==========
-    comm_cart   : :py:class:`MPI.MPI_Comm`
-        MPI topology
+    comm   :   MPI.Comm
+        MPI communicator the proc mesh is built for.
+        Note that it does not have the 2D topology.
+
     this        : array_like 
         The rank of current process in the procmesh 
     np          : array_like
@@ -309,49 +311,53 @@ cdef class ProcMesh(object):
     rank        : int
         MPI rank
     """
-    cdef MPI.MPI_Comm comm_cart
     cdef readonly numpy.ndarray this # nd rank of the current process
     cdef readonly numpy.ndarray np
     cdef readonly int rank
     cdef readonly int ndim
-    cdef MPI.MPI_Comm * comm_col
+    cdef readonly object comm
+
+    cdef cMPI.MPI_Comm ccart
+    cdef cMPI.MPI_Comm * ccol
 
     def __init__(self, np, comm=None):
         """ A mesh of processes 
             np is the number of processes in each direction.
-
 
             example:
                 procmesh = ProcMesh([2, 3]) # creates a 2 x 3 mesh.
 
             product(np) must equal to comm.size
             
-            if the mpi4py version is recent (MPI._addressof), comm can
+            if the mpi4py version is recent (cMPI._addressof), comm can
             be any mpi4py Comm objects.
         """
-        cdef MPI.MPI_Comm mpicomm
-        self.comm_col = NULL
-        self.comm_cart = NULL
+        cdef cMPI.MPI_Comm ccomm
+        self.ccol = NULL
+        self.ccart = NULL
 
         if comm is None:
-            mpicomm = MPI.MPI_COMM_WORLD
-        else:
-            if isinstance(comm, pyMPI.Comm):
-                if hasattr(pyMPI, '_addressof'):
-                    mpicomm = (<MPI.MPI_Comm*> (<numpy.intp_t>
-                            pyMPI._addressof(comm))) [0]
-                else:
-                    raise ValueError("only comm=None is supported, "
-                            + " update mpi4py to a version with MPI._addressof")
-            else:
-                raise ValueError("only MPI.Comm objects are supported")
+            comm = MPI.COMM_WORLD
 
-        MPI.MPI_Comm_rank(mpicomm, &self.rank)
+        if isinstance(comm, MPI.Comm):
+            if hasattr(MPI, '_addressof'):
+                ccomm = (<cMPI.MPI_Comm*> (<numpy.intp_t>
+                        MPI._addressof(comm))) [0]
+            else:
+                if comm == MPI.COMM_WORLD:
+                    ccomm = cMPI.MPI_COMM_WORLD
+                else:
+                    raise ValueError("only comm=MPI.COMM_WORLD is supported, "
+                            + " update mpi4py to 2.0, with MPI._addressof")
+        self.comm = comm
+
+        self.rank = comm.rank
+
         cdef int [::1] np_ = numpy.array(np, 'int32')
-        rt = pfft_create_procmesh(np_.shape[0], mpicomm, &np_[0], &self.comm_cart)
+        rt = pfft_create_procmesh(np_.shape[0], ccomm, &np_[0], &self.ccart)
 
         if rt != 0:
-            self.comm_cart = NULL
+            self.ccart = NULL
             raise RuntimeError("Failed to create proc mesh")
 
         self.np = numpy.array(np_)
@@ -362,29 +368,29 @@ cdef class ProcMesh(object):
 
         # now fill `this'
         self.this = numpy.array(np, 'int32')
-        MPI.MPI_Cart_get(self.comm_cart, 2, 
+        cMPI.MPI_Cart_get(self.ccart, 2, 
                 &junk[0], &junk[0],
                 <int*>self.this.data);
 
-        # build the comm_col sub communicators
-        self.comm_col = <MPI.MPI_Comm*>calloc(self.ndim, sizeof(MPI.MPI_Comm))
+        # build the ccol sub communicators
+        self.ccol = <cMPI.MPI_Comm*>calloc(self.ndim, sizeof(cMPI.MPI_Comm))
         for i in range(self.ndim):
             junk[:] = 0
             junk[i] = 1
-            if MPI.MPI_SUCCESS != MPI.MPI_Cart_sub(self.comm_cart, &junk[0],
-                    &self.comm_col[i]):
-                self.comm_col[i] = NULL
+            if cMPI.MPI_SUCCESS != cMPI.MPI_Cart_sub(self.ccart, &junk[0],
+                    &self.ccol[i]):
+                self.ccol[i] = NULL
                 raise RuntimeError("Failed to create sub communicators")
 
     def __dealloc__(self):
-        if self.comm_cart:
-            MPI.MPI_Comm_free(&self.comm_cart)
+        if self.ccart:
+            cMPI.MPI_Comm_free(&self.ccart)
             pass
-        if self.comm_col != NULL:
+        if self.ccol != NULL:
             for i in range(self.ndim):
-                if self.comm_col[i]:
-                    MPI.MPI_Comm_free(&self.comm_col[i])
-            free(self.comm_col)
+                if self.ccol[i]:
+                    cMPI.MPI_Comm_free(&self.ccol[i])
+            free(self.ccol)
 
 cdef class Partition(object):
     cdef readonly size_t alloc_local
@@ -459,7 +465,7 @@ cdef class Partition(object):
 
         rt = func(n_.shape[0], 
                 &n_[0], 
-                procmesh.comm_cart,
+                procmesh.ccart,
                 flags,
                 &local_ni[0],
                 &local_i_start[0],
@@ -577,9 +583,9 @@ cdef class Partition(object):
             start_dim[0] = 0
             if d1 < self.procmesh.ndim:
                 tmp = local_n[d]
-                MPI.MPI_Allgather(&tmp, sizeof(numpy.intp_t), MPI.MPI_BYTE, 
-                        &start_dim[1], sizeof(numpy.intp_t), MPI.MPI_BYTE, 
-                        self.procmesh.comm_col[d1])
+                cMPI.MPI_Allgather(&tmp, sizeof(numpy.intp_t), cMPI.MPI_BYTE, 
+                        &start_dim[1], sizeof(numpy.intp_t), cMPI.MPI_BYTE, 
+                        self.procmesh.ccol[d1])
             else:
                 start_dim[1] = local_n[d1]
 
@@ -704,7 +710,7 @@ cdef class Plan(object):
         else:
             self.inplace = False
         self.plan = func(n_.shape[0], &n_[0], i.ptr, o.ptr,
-                procmesh.comm_cart,
+                procmesh.ccart,
                 self.direction,
                 flags)
         if not self.plan:
