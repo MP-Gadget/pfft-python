@@ -8,13 +8,16 @@ from numpy.testing import assert_array_equal, assert_almost_equal
 from mpi4py_test import MPIWorld
 
 from mpi4py import MPI
-def test_wrold():
+def test_world():
     world = MPI.COMM_WORLD
 
     procmesh = pfft.ProcMesh(np=[world.size,], comm=world)
     assert procmesh.comm == world
     procmesh = pfft.ProcMesh(np=[world.size,], comm=None)
     assert procmesh.comm == world
+
+    assert_array_equal(pfft.ProcMesh.split(2, None), pfft.ProcMesh.split(2, world))
+    assert_array_equal(pfft.ProcMesh.split(1, None), pfft.ProcMesh.split(1, world))
 
 @MPIWorld(NTask=3, required=3, optional=True)
 def test_edges(comm):

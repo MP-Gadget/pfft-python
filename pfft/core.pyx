@@ -15,6 +15,21 @@ from libc.string cimport memset
 
 numpy.import_array()
 
+def split_size_2d(s):
+    """ Split `s` into two integers, 
+        a and d, such that a * d == s and a <= d
+
+        returns:  a, d
+    """
+    a = int(s** 0.5) + 1
+    d = s
+    while a > 1:
+        if s % a == 0:
+            d = s // a
+            break
+        a = a - 1 
+    return a, d
+
 ####
 #  import those pfft functions
 #####
@@ -319,6 +334,18 @@ cdef class ProcMesh(object):
 
     cdef cMPI.MPI_Comm ccart
     cdef cMPI.MPI_Comm * ccol
+
+    @classmethod
+    def split(cls, ndim, comm=None):
+        if comm is None:
+            comm = MPI.COMM_WORLD
+        if ndim == 2:
+            np = split_size_2d(comm.size)
+        elif ndim == 1:
+            np = [comm.size]
+        else:
+            raise ValueError("only know how to split to upto 2d")
+        return np
 
     def __init__(self, np, comm=None):
         """ A mesh of processes 

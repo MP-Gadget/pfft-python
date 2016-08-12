@@ -229,7 +229,7 @@ try:
                 f = param
                 print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4])
         np = param[0]
-        procmesh = ProcMesh(np)
+        procmesh = ProcMesh(np=np)
         try:
             test_roundtrip_3d(procmesh, *(param[1:]))
             PASS.append(param)
