@@ -27,7 +27,7 @@ allow early exploration of a migration into scripting languages in super computi
 
 For example, we have build a particle-mesh solver at
 
-    http://github.com/rainwoodman/pypm
+    http://github.com/rainwoodman/pmesh
 
 For some leverage of the python import problem, see `python-mpi-bcast` at 
 
