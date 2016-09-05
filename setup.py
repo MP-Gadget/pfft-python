@@ -27,12 +27,6 @@ def build_pfft(prefix, compiler, cflags):
     if ret != 0:
         raise ValueError("could not build fftw; check MPICC?")
 
-def myext(*args):
-    return 
-
-extensions = [
-        ]
-
 class build_ext_subclass(build_ext):
     user_options = build_ext.user_options + \
             [
@@ -42,8 +36,8 @@ class build_ext_subclass(build_ext):
         try:
             compiler = str(mpi4py.get_config()['mpicc'])
         except:
-            pass
-        compiler = "mpicc"
+            compiler = "mpicc"
+
         self.mpicc = os.environ.get('MPICC', compiler)
 
         build_ext.initialize_options(self)    
@@ -68,12 +62,9 @@ class build_ext_subclass(build_ext):
                 'libfftw3f_mpi.a', 
                 'libfftw3f.a', 
                 ]
-        
+
         link_objects = [list(glob.glob(os.path.join(self.pfft_build_dir, '*', i)))[0] for i in link_objects]
         self.compiler.set_link_objects(link_objects)
-
-        #for ext in self.extensions:
-        #    ext.depends += link_objects
 
         build_ext.build_extensions(self)
 
