@@ -94,14 +94,14 @@ setup(
     install_requires=['cython', 'numpy'],
     packages= ['pfft', 'pfft.tests'],
     requires=['numpy'],
-    ext_modules = cythonize(Extension( 
+    ext_modules = cythonize([Extension( 
                 "pfft.core", 
                 ["pfft/core.pyx"],
                 include_dirs=["./", 
                 numpy.get_include(),
                 ],
                 cython_directives = {"embedsignature": True}
-                )),
+                )]),
     cmdclass = {
         "build_py":build_py,
         "build_ext": build_ext_subclass}
