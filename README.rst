@@ -39,7 +39,7 @@ To install from PyPI:
 
 .. code::
 
-    easy_install --user pfft-python
+    pip --user pfft-python
 
 To install from git source
 
@@ -49,6 +49,10 @@ To install from git source
 
 PFFT, patched FFTW, and the binding are linked into one giant (6MB) shared
 object file.  We use `-fvisibility=hidden` to hide the PFFT/FFTW symbols.
+
+For Macs with Anaconda, due to this bug https://github.com/conda/conda/issues/2277
+one needs to make a symlink from the anaconda installation directory to
+/opt/anaconda1anaconda2anaconda3 .
 
 The mental model of PFFT is similar to FFTW. We plan ahead such that the code
 runs and runs fast. 4 objects are involved in a FFT:
