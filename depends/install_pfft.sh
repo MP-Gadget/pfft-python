@@ -14,8 +14,10 @@ LOGFILE="build.log"
 mkdir $TMP 
 ROOT=`dirname $0`/../
 if ! [ -f $ROOT/depends/pfft-$PFFT_VERSION.tar.gz ]; then
-wget https://github.com/rainwoodman/pfft/releases/download/$PFFT_VERSION/pfft-$PFFT_VERSION.tar.gz \
-    -O $ROOT/depends/pfft-$PFFT_VERSION.tar.gz 
+echo curl -o $ROOT/depends/pfft-$PFFT_VERSION.tar.gz \
+https://github.com/rainwoodman/pfft/releases/download/$PFFT_VERSION/pfft-$PFFT_VERSION.tar.gz
+curl -L -o $ROOT/depends/pfft-$PFFT_VERSION.tar.gz \
+https://github.com/rainwoodman/pfft/releases/download/$PFFT_VERSION/pfft-$PFFT_VERSION.tar.gz
 fi
 
 gzip -dc $ROOT/depends/pfft-$PFFT_VERSION.tar.gz | tar xf - -C $TMP
