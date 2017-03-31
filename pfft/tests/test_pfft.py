@@ -5,9 +5,9 @@ import numpy
 from numpy.testing import assert_array_equal, assert_almost_equal
 
 
-from mpi4py_test import MPITest
-
+from runtests.mpi import MPITest
 from mpi4py import MPI
+
 def test_world():
     world = MPI.COMM_WORLD
 
