@@ -5,7 +5,7 @@ import numpy
 from numpy.testing import assert_array_equal, assert_almost_equal
 
 
-from mpi4py_test import MPIWorld
+from mpi4py_test import MPITest
 
 from mpi4py import MPI
 def test_world():
@@ -19,7 +19,7 @@ def test_world():
     assert_array_equal(pfft.ProcMesh.split(2, None), pfft.ProcMesh.split(2, world))
     assert_array_equal(pfft.ProcMesh.split(1, None), pfft.ProcMesh.split(1, world))
 
-@MPIWorld(NTask=3, required=3, optional=True)
+@MPITest(3)
 def test_edges(comm):
     procmesh = pfft.ProcMesh(np=[comm.size,], comm=comm)
 
@@ -30,7 +30,7 @@ def test_edges(comm):
     assert_array_equal(partition.i_edges[0], [0, 2, 4, 4])
     assert_array_equal(partition.i_edges[1], [0, 4])
 
-@MPIWorld(NTask=1, required=1)
+@MPITest(1)
 def test_transposed(comm):
     procmesh = pfft.ProcMesh(np=[1,], comm=comm)
 
@@ -50,7 +50,7 @@ def test_transposed(comm):
     assert o.dtype == numpy.dtype('complex128')
     assert i.dtype == numpy.dtype('complex128')
 
-@MPIWorld(NTask=1, required=1)
+@MPITest(1)
 def test_padded(comm):
     procmesh = pfft.ProcMesh(np=[1,], comm=comm)
 
@@ -70,9 +70,9 @@ def test_padded(comm):
     assert i.dtype == numpy.dtype('float64')
     assert o.dtype == numpy.dtype('complex128')
 
-@MPIWorld(NTask=1, required=1)
+@MPITest(1)
 def test_correct_single(comm):
-    procmesh = pfft.ProcMesh(np=[1,], comm=comm)
+    procmesh = pfft.ProcMesh(np=[1], comm=comm)
 
     partition = pfft.Partition(pfft.Type.PFFT_C2C, [2, 2],
         procmesh, flags=pfft.Flags.PFFT_ESTIMATE)
@@ -87,7 +87,7 @@ def test_correct_single(comm):
 
     assert_array_equal(correct, buffer2.view_output())
 
-@MPIWorld(NTask=1, required=1)
+@MPITest(1)
 def test_transpose_1d_decom(comm):
     procmesh = pfft.ProcMesh(np=[1,], comm=comm)
     N = (1, 2, 3, 4)
@@ -101,7 +101,7 @@ def test_transpose_1d_decom(comm):
     o = buffer.view_output()
     assert_array_equal(o.strides, [192, 192, 64, 16])
 
-@MPIWorld(NTask=1, required=1)
+@MPITest(1)
 def test_transpose_2d_decom(comm):
     procmesh = pfft.ProcMesh(np=[1,1], comm=comm)
     N = (1, 2, 3, 4)
@@ -115,7 +115,7 @@ def test_transpose_2d_decom(comm):
     o = buffer.view_output()
     assert_array_equal(o.strides, [64, 192, 64, 16])
 
-@MPIWorld(NTask=1, required=1)
+@MPITest(1)
 def test_transpose_3d_decom(comm):
     procmesh = pfft.ProcMesh(np=[1,1,1], comm=comm)
     N = (1, 2, 3, 4, 5)
@@ -130,7 +130,7 @@ def test_transpose_3d_decom(comm):
     o = buffer.view_output()
     assert_array_equal(o.strides, [80, 960, 320, 80, 16])
 
-@MPIWorld(NTask=(1, 4), required=1)
+@MPITest((1, 4))
 def test_correct_multi(comm):
     procmesh = pfft.ProcMesh(np=[comm.size,], comm=comm)
     N = (2, 3)
