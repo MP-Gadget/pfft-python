@@ -482,8 +482,11 @@ cdef class Partition(object):
 
         local_ni, local_no, local_i_start, local_o_start = numpy.empty((4, n_.shape[0]), 'intp')
 
-        if len(n_) <= len(procmesh.np):
+        if len(n_) < len(procmesh.np):
             raise ValueError("ProcMesh (%d) shall have less dimentions than Mesh (%d)" % (len(procmesh.np), len(n_)))
+
+        if len(n_) == len(procmesh.np): # https://github.com/mpip/pfft/issues/29
+            raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported." % (len(procmesh.np), len(n_)))
 
         self.type = Type(type)
         self.flags = Flags(flags)
