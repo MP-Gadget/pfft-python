@@ -100,6 +100,7 @@ setup(
                 include_dirs=["./", 
                 numpy.get_include(),
                 ],
+                libraries=['m'],
                 cython_directives = {"embedsignature": True}
                 )]),
     license='GPL3',
