@@ -11,7 +11,7 @@ PFFT_VERSION=1.0.8-alpha2-fftw3
 TMP="tmp-pfft-$PFFT_VERSION"
 LOGFILE="build.log"
 
-mkdir $TMP 
+mkdir -p $TMP 
 ROOT=`dirname $0`/../
 if ! [ -f $ROOT/depends/pfft-$PFFT_VERSION.tar.gz ]; then
 echo curl -o $ROOT/depends/pfft-$PFFT_VERSION.tar.gz \
