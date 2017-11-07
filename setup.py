@@ -91,7 +91,7 @@ setup(
     url="http://github.com/rainwoodman/pfft-python",
     #package_dir = {'pfft': 'pfft'},
     zip_safe=False,
-    install_requires=['cython', 'numpy', 'mpi4py', 'mpi4py_test'],
+    install_requires=['cython', 'numpy', 'mpi4py'],
     packages= ['pfft', 'pfft.tests'],
     requires=['numpy'],
     ext_modules = cythonize([Extension( 
