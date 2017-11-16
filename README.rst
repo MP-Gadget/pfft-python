@@ -14,6 +14,11 @@ This is the python binding of PFFT.
     :alt: Build Status
     :target: https://travis-ci.org/rainwoodman/pfft-python/
 
+DOI of pfft-pythone:
+
+.. image:: https://zenodo.org/badge/26140163.svg
+   :target: https://zenodo.org/badge/latestdoi/26140163
+   
 PFFT is a FFT library with excellent scaling at large number of processors.
 We have been routinely running 10,000 ** 3 transforms on 81,000 MPI ranks as 
 a component of the BlueTides simulation at National Center for Supercomputing
