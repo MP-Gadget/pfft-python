@@ -14,7 +14,7 @@ This is the python binding of PFFT.
     :alt: Build Status
     :target: https://travis-ci.org/rainwoodman/pfft-python/
 
-DOI of pfft-pythone:
+DOI of pfft-python:
 
 .. image:: https://zenodo.org/badge/26140163.svg
    :target: https://zenodo.org/badge/latestdoi/26140163
