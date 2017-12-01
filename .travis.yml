@@ -21,10 +21,10 @@ before_install:
     - conda update --yes conda
 
 install:
-    - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION
+    - conda create --yes -n test python=$TRAVIS_PYTHON_VERSION gcc_linux-64
     - source activate test
     - conda install --yes numpy=$NUMPY_VERSION nose cython
-    - conda install -c bccp mpi4py mpich
+    - conda install --yes -c bccp mpi4py mpich
     - python setup.py install
     - ls $TRAVIS_BUILD_DIR/
 
