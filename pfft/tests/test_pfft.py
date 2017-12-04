@@ -152,3 +152,16 @@ def test_correct_multi(comm):
     result[partition.local_o_slice] = buffer2.view_output()
     result = comm.allreduce(result)
     assert_almost_equal(correct, result)
+
+@MPITest(commsize=1)
+def test_leak(comm):
+    for i in range(1024):
+        procmesh = pfft.ProcMesh(np=[1,1], comm=comm)
+
+        partition = pfft.Partition(pfft.Type.PFFT_C2C,
+                [128, 128, 128], procmesh,
+                pfft.Flags.PFFT_TRANSPOSED_OUT)
+
+        buffer = pfft.LocalBuffer(partition)
+        #FIXME: check with @mpip if this is correct.
+        i = buffer.view_input()
