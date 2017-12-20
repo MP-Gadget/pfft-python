@@ -30,7 +30,7 @@ mkdir -p double;cd double
 --disable-fortran --disable-doc --enable-mpi ${OPTIMIZE} &&
 make -j 4   &&
 make install && echo "PFFT_DONE"
-) 2>&1 > ${LOGFILE}.double
+) 2>&1 |tee ${LOGFILE}.double | awk "{printf(\".\")} NR % 40 == 0 {printf(\"\n\")} END {printf(\"\n\")}"
 
 if ! grep PFFT_DONE ${LOGFILE}.double > /dev/null; then
     tail ${LOGFILE}.double
@@ -42,7 +42,7 @@ mkdir -p single;cd single
 --disable-fortran --disable-doc --enable-mpi $2 ${OPTIMIZE1} &&
 make -j 4  &&
 make install && echo "PFFT_DONE"
-) 2>&1 > ${LOGFILE}.single
+) 2>&1 |tee ${LOGFILE}.single | awk "{printf(\".\")} NR % 40 == 0 {printf(\"\n\")} END {printf(\"\n\")}"
 
 if ! grep PFFT_DONE ${LOGFILE}.single > /dev/null; then
     tail ${LOGFILE}.single
