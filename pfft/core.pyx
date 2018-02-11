@@ -423,6 +423,8 @@ cdef class Partition(object):
     cdef readonly size_t alloc_local
     cdef readonly int ndim
     cdef readonly numpy.ndarray n
+    cdef readonly numpy.ndarray ni
+    cdef readonly numpy.ndarray no
     cdef readonly numpy.ndarray local_ni
     cdef readonly numpy.ndarray local_i_start
     cdef readonly numpy.ndarray local_no
@@ -556,6 +558,9 @@ cdef class Partition(object):
                 for start, n in zip(
                     self.local_o_start, self.local_no)])
 
+        self.ni = numpy.array([e[-1] for e in self.i_edges], dtype='intp')
+        self.no = numpy.array([e[-1] for e in self.o_edges], dtype='intp')
+
     def _build_shape_strides(self, numpy.intp_t[::1] local_start, numpy.intp_t[::1] local_n, transposed):
         cdef int d
         cdef numpy.intp_t[::1] axismapping
@@ -617,7 +622,8 @@ cdef class Partition(object):
                         &start_dim[1], sizeof(numpy.intp_t), cMPI.MPI_BYTE, 
                         self.procmesh.ccol[d1])
             else:
-                start_dim[1] = local_n[d1]
+                # use the full axis, because it is not chopped
+                start_dim[1] = local_n[d]
 
             start_dim_a = numpy.array(start_dim, copy=False)
             start_dim_a[:] = numpy.cumsum(start_dim_a)
