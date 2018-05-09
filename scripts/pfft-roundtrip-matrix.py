@@ -28,7 +28,6 @@ import numpy
 import argparse
 
 import os.path
-from sys import path
 
 parser = argparse.ArgumentParser(description='Roundtrip testing of pfft', 
         epilog=__doc__,
@@ -43,23 +42,10 @@ parser.add_argument('-Nproc', nargs='+', type=int,
         action='append',
         help='proc mesh',
         default=[])
-parser.add_argument('-tree', action='store_true', default=False,
-        help='Use pfft from source tree, ' +
-        'built with setup.py build_ext --inplace')
 parser.add_argument('-diag', action='store_true', default=False,
         help='show which one failed and which one passed')
 parser.add_argument('-verbose', action='store_true', default=False,
         help='print which test will be ran')
-
-ns = parser.parse_args()
-Nmesh = ns.Nmesh
-if len(Nmesh) == 0:
-    # default 
-    Nmesh = [[29, 30, 31]]
-if ns.tree:
-    # prefers to use the locally built pfft in source tree, in case there is an
-    # installation
-    path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from pfft import *
 
@@ -198,13 +184,20 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     if (c2rerr > 5e-4):
         raise LargeError("c2r: %g" % c2rerr)
 
-if MPI.COMM_WORLD.size == 1 and len(ns.Nproc) == 0:
-    nplist = [ [1], [1, 1], ]
-else:
-    nplist = ns.Nproc
-            
+def main():
 
-try:
+    ns = parser.parse_args()
+    Nmesh = ns.Nmesh
+
+    if len(Nmesh) == 0:
+        # default 
+        Nmesh = [[29, 30, 31]]
+
+    if MPI.COMM_WORLD.size == 1 and len(ns.Nproc) == 0:
+        nplist = [ [1], [1, 1], ]
+    else:
+        nplist = ns.Nproc
+
     flags = [
             Flags.PFFT_ESTIMATE | Flags.PFFT_DESTROY_INPUT,
             Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_DESTROY_INPUT,
@@ -246,6 +239,28 @@ try:
             for f, e in FAIL:
                 print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4], e)
         assert len(FAIL) == 0
-except Exception as e:
-    print(traceback.format_exc())
-    MPI.COMM_WORLD.Abort()
+
+# use unbuffered stdout
+class Unbuffered(object):
+   def __init__(self, stream):
+       self.stream = stream
+   def write(self, data):
+       self.stream.write(data)
+       self.stream.flush()
+   def writelines(self, datas):
+       self.stream.writelines(datas)
+       self.stream.flush()
+   def __getattr__(self, attr):
+       return getattr(self.stream, attr)
+
+import sys
+sys.stdout = Unbuffered(sys.stdout)
+
+if __name__ == '__main__':
+
+    try:
+        main()
+    except Exception as e:
+        print(traceback.format_exc())
+        MPI.COMM_WORLD.Abort()
+
