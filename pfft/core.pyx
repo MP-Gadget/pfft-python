@@ -487,8 +487,8 @@ cdef class Partition(object):
         if len(n_) < len(procmesh.np):
             raise ValueError("ProcMesh (%d) shall have less dimentions than Mesh (%d)" % (len(procmesh.np), len(n_)))
 
-        if len(n_) == len(procmesh.np): # https://github.com/mpip/pfft/issues/29
-            raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported." % (len(procmesh.np), len(n_)))
+        if len(n_) == len(procmesh.np) and len(n_) != 2: # https://github.com/mpip/pfft/issues/29
+            raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported other than 2don2d." % (len(procmesh.np), len(n_)))
 
         self.type = Type(type)
         self.flags = Flags(flags)
