@@ -11,11 +11,15 @@
        inplace transform 
 
    Examples:
+
+   * to run in source code, first get a shell with
+       python runtests.py --shell
+
    * for single-rank numpy agreement test, run with
-       mpirun -np 1 python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 -tree -verbose
+       mpirun -np 1 python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 -verbose
 
    * for multi-rank tests, run with 
-       mpirun -np n python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 -tree -verbose
+       mpirun -np 4 python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 --verbose
 
    n can be any number. procmeshes tested are:
        np = [n], [1, n], [n, 1], [a, d], [d, a]
@@ -238,7 +242,11 @@ def main():
         if ns.diag:
             for f, e in FAIL:
                 print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4], e)
-        assert len(FAIL) == 0
+
+    if len(FAIL) != 0:
+        return 1
+
+    return 0
 
 # use unbuffered stdout
 class Unbuffered(object):
@@ -259,7 +267,7 @@ sys.stdout = Unbuffered(sys.stdout)
 if __name__ == '__main__':
 
     try:
-        main()
+        sys.exit(main())
     except Exception as e:
         print(traceback.format_exc())
         MPI.COMM_WORLD.Abort()
