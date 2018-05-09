@@ -540,7 +540,7 @@ cdef class Partition(object):
         # them from local_ni.
 
         self.i_edges = self._build_edges(self.local_ni,
-                self.flags & Flags.PFFT_TRANSPOSED_IN
+                self.flags & Flags.PFFT_TRANSPOSED_IN,
                 )
         self.o_edges = self._build_edges(self.local_no,
                 self.flags & Flags.PFFT_TRANSPOSED_OUT
@@ -589,6 +589,8 @@ cdef class Partition(object):
             strides[d0] = local_n[d1] * strides[d1]
             #print d0, d1, local_n[d1], strides[d1], '=', strides[d0]
 
+        # if shape[d] is too large, there is padding
+        # we know it must be r2c here, so replace with n[d]
         for d in range(self.ndim):
             if shape[d] > self.n[d] - local_start[d]:
                 shape[d] = self.n[d] - local_start[d]
@@ -624,6 +626,10 @@ cdef class Partition(object):
             else:
                 # use the full axis, because it is not chopped
                 start_dim[1] = local_n[d]
+                # if local_n is too large, there is padding
+                # we know it must be r2c here, so replace with n[d]
+                if start_dim[1] > self.n[d]:
+                    start_dim[1] = self.n[d]
 
             start_dim_a = numpy.array(start_dim, copy=False)
             start_dim_a[:] = numpy.cumsum(start_dim_a)

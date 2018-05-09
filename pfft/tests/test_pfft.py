@@ -25,13 +25,30 @@ def test_edges(comm):
 
     partition = pfft.Partition(pfft.Type.PFFT_C2C,
             [4, 4], procmesh,
-            pfft.Flags.PFFT_TRANSPOSED_OUT)
+            pfft.Flags.PFFT_TRANSPOSED_OUT
+        )
 
     assert_array_equal(partition.i_edges[0], [0, 2, 4, 4])
     assert_array_equal(partition.i_edges[1], [0, 4])
 
     assert_array_equal(partition.o_edges[1], [0, 2, 4, 4])
     assert_array_equal(partition.o_edges[0], [0, 4])
+
+@MPITest(1)
+def test_edges_padded(comm):
+    procmesh = pfft.ProcMesh(np=[comm.size,], comm=comm)
+
+    partition = pfft.Partition(pfft.Type.PFFT_R2C,
+            [16, 8], procmesh,
+            pfft.Flags.PFFT_TRANSPOSED_OUT |
+            pfft.Flags.PFFT_PADDED_R2C
+    )
+
+    assert_array_equal(partition.i_edges[0], [0, 16])
+    assert_array_equal(partition.i_edges[1], [0, 8])
+
+    assert_array_equal(partition.o_edges[0], [0, 16])
+    assert_array_equal(partition.o_edges[1], [0, 5])
 
 @MPITest(3)
 def test_nino(comm):
