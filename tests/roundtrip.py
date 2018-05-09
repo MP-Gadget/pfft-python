@@ -35,12 +35,12 @@ parser = argparse.ArgumentParser(description='Roundtrip testing of pfft',
        formatter_class=argparse.RawDescriptionHelpFormatter 
         )
 
-parser.add_argument('-Nmesh', nargs=3, type=int,
-        action='append', metavar=('Nx', 'Ny', 'Nz'), 
+parser.add_argument('-Nmesh', nargs='+', type=int,
+        action='append',
         help='size of FFT mesh, default is 29 30 31',
         default=[])
-parser.add_argument('-Nproc', nargs=2, type=int,
-        action='append', metavar=('Nx', 'Ny'), 
+parser.add_argument('-Nproc', nargs='+', type=int,
+        action='append',
         help='proc mesh',
         default=[])
 parser.add_argument('-tree', action='store_true', default=False,
@@ -198,11 +198,8 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     if (c2rerr > 5e-4):
         raise LargeError("c2r: %g" % c2rerr)
 
-if MPI.COMM_WORLD.size == 1: 
-    nplist = [
-            [1],
-            [1, 1],
-            ]
+if MPI.COMM_WORLD.size == 1 and len(ns.Nproc) == 0:
+    nplist = [ [1], [1, 1], ]
 else:
     nplist = ns.Nproc
             
