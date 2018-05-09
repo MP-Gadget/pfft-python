@@ -38,6 +38,9 @@ parser = argparse.ArgumentParser(description='Roundtrip testing of pfft',
        formatter_class=argparse.RawDescriptionHelpFormatter 
         )
 
+from pfft import *
+
+
 parser.add_argument('-Nmesh', nargs='+', type=int,
         action='append',
         help='size of FFT mesh, default is 29 30 31',
@@ -48,10 +51,10 @@ parser.add_argument('-Nproc', nargs='+', type=int,
         default=[])
 parser.add_argument('-diag', action='store_true', default=False,
         help='show which one failed and which one passed')
+parser.add_argument('-rigor', default="estimate", choices=['estimate', 'measure', 'patient', 'exhaustive'],
+        help='the level of rigor in planning. ')
 parser.add_argument('-verbose', action='store_true', default=False,
         help='print which test will be ran')
-
-from pfft import *
 
 class LargeError(Exception):
     pass
@@ -202,14 +205,24 @@ def main():
     else:
         nplist = ns.Nproc
 
-    flags = [
-            Flags.PFFT_ESTIMATE | Flags.PFFT_DESTROY_INPUT,
-            Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_DESTROY_INPUT,
-            Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C,
-            Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT,
-            Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT | Flags.PFFT_DESTROY_INPUT,
-            Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_TRANSPOSED_OUT,
-            ]
+    rigor = {
+            'exhaustive': Flags.PFFT_EXHAUSTIVE,
+            'patient' : Flags.PFFT_PATIENT,
+            'estimate' : Flags.PFFT_ESTIMATE,
+            'measure' : Flags.PFFT_MEASURE,
+            }[ns.rigor]
+    import itertools
+    import functools
+
+    flags = []
+    matrix = Flags.PFFT_DESTROY_INPUT, Flags.PFFT_PADDED_R2C, Flags.PFFT_TRANSPOSED_OUT
+    print_flags = functools.reduce(lambda x, y: x | y, matrix, rigor)
+
+    matrix2 = [[0, i] for i in matrix]
+    for row in itertools.product(*matrix2):
+        flag = functools.reduce(lambda x, y: x | y, row, rigor)
+        flags.append(flag)
+
     params = list(itertools.product(
             nplist, [Type.PFFT_C2C, Type.PFFT_R2C, Type.PFFTF_C2C, Type.PFFTF_R2C], flags, [True, False],
             Nmesh,
@@ -235,18 +248,38 @@ def main():
 
     if MPI.COMM_WORLD.rank == 0:
         print("PASS", len(PASS), '/', len(params))
+
         if ns.diag:
+            printcase("", "", print_flags, header=True)
             for f in PASS:
-                print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4])
+                printcase(f, "", print_flags, )
         print("FAIL", len(FAIL), '/', len(params))
         if ns.diag:
+            printcase("", "", print_flags, header=True)
             for f, e in FAIL:
-                print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4], e)
+                printcase(f, e, print_flags)
 
     if len(FAIL) != 0:
         return 1
 
     return 0
+
+def printcase(f, e, flags, header=False):
+    if header:
+        inplace = "INPLACE"
+        np = "NP"
+        flags = "FLAGS"
+        type = "TYPE"
+        nmesh = "NMESH"
+        error = "ERROR"
+    else:
+        inplace = "INPL" if f[3] else "OUTP"
+        np = str(f[0])
+        flags = Flags(f[2]).format(flags)
+        type = repr(Type(f[1]))
+        nmesh = str(f[4])
+        error = str(e)
+    print("%(np)-6s %(nmesh)-8s %(type)-6s %(inplace)-6s %(flags)-80s %(error)-s" % locals())
 
 # use unbuffered stdout
 class Unbuffered(object):
