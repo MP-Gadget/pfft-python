@@ -239,7 +239,6 @@ def main():
         procmesh = ProcMesh(np=np)
         try:
             test_roundtrip_3d(procmesh, *(param[1:]))
-            print("ran", f)
             PASS.append(param)
         except LargeError as e:
             if ns.verbose:
