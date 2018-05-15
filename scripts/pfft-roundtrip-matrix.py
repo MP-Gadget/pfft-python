@@ -40,6 +40,10 @@ parser = argparse.ArgumentParser(description='Roundtrip testing of pfft',
 
 from pfft import *
 
+oldprint = print
+def print(*args, **kwargs):
+    if MPI.COMM_WORLD.rank == 0:
+        oldprint(*args, **kwargs)
 
 parser.add_argument('-Nmesh', nargs='+', type=int,
         action='append',
@@ -60,13 +64,14 @@ class LargeError(Exception):
     pass
 
 def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
+
     partition = Partition(type, Nmesh, procmesh, flags)
     for rank in range(MPI.COMM_WORLD.size):
         MPI.COMM_WORLD.barrier()
         if rank != procmesh.rank:
             continue
-        #print procmesh.rank, 'roundtrip test, np=', procmesh.np, 'Nmesh = ', Nmesh, 'inplace = ', inplace
-        #print repr(partition)
+        #oldprint(procmesh.rank, 'roundtrip test, np=', procmesh.np, 'Nmesh = ', Nmesh, 'inplace = ', inplace)
+        #oldprint(repr(partition))
 
     buf1 = LocalBuffer(partition)
     if inplace:
@@ -89,9 +94,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
             buf2,
             type=type,
             flags=flags)
-    if procmesh.rank == 0:
-        #print repr(forward)
-        pass
+    # print(repr(forward))
 
     # find the inverse plan
     typemap = {
@@ -132,9 +135,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
             type=btype, 
             flags=bflags,
             )
-    if procmesh.rank == 0:
-        #print repr(backward)
-        pass
+    #print(repr(backward))
 
     numpy.random.seed(9999)
 
@@ -176,8 +177,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
         MPI.COMM_WORLD.barrier()
         if rank != procmesh.rank:
             continue
-        if False:
-            print('error', original - input)
+        # oldprint('error', original - input)
         MPI.COMM_WORLD.barrier()
     if False:
         print(repr(forward.type), 'forward', "error = ", r2cerr)
@@ -186,10 +186,10 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     r2cerr = MPI.COMM_WORLD.allreduce(r2cerr, MPI.MAX)
     c2rerr = MPI.COMM_WORLD.allreduce(c2rerr, MPI.MAX)
     if (r2cerr > 5e-4):
-        raise LargeError("r2c: %g" % r2cerr)
+        raise LargeError("forward: %g" % r2cerr)
 
     if (c2rerr > 5e-4):
-        raise LargeError("c2r: %g" % c2rerr)
+        raise LargeError("backward: %g" % c2rerr)
 
 def main():
 
@@ -230,34 +230,48 @@ def main():
 
     PASS = []
     FAIL = []
+    IMPL = []
     for param in params:
-        if MPI.COMM_WORLD.rank == 0:
-            if ns.verbose:
-                f = param
-                print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4])
+        if ns.verbose:
+            f = param
+            print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4])
         np = param[0]
         procmesh = ProcMesh(np=np)
         try:
             test_roundtrip_3d(procmesh, *(param[1:]))
+            print("ran", f)
             PASS.append(param)
         except LargeError as e:
             if ns.verbose:
                 f = param
-                print("Failed", e)
+                print("Failed", f, e)
             FAIL.append((param, e))
+        except NotImplementedError as e:
+            if ns.verbose:
+                f = param
+                print("notsupported", f, e)
+            IMPL.append((param, e))
 
-    if MPI.COMM_WORLD.rank == 0:
-        print("PASS", len(PASS), '/', len(params))
+    N = len(PASS) + len(FAIL) + len(IMPL)
 
-        if ns.diag:
-            printcase("", "", print_flags, header=True)
-            for f in PASS:
-                printcase(f, "", print_flags, )
-        print("FAIL", len(FAIL), '/', len(params))
-        if ns.diag:
-            printcase("", "", print_flags, header=True)
-            for f, e in FAIL:
-                printcase(f, e, print_flags)
+    print("PASS", len(PASS), '/', N)
+
+    if ns.diag:
+        printcase("", "", print_flags, header=True)
+        for f in PASS:
+            printcase(f, "", print_flags, )
+
+    print("UNIMPL", len(IMPL), '/', N)
+    if ns.diag:
+        printcase("", "", print_flags, header=True)
+        for f, e in IMPL:
+            printcase(f, e, print_flags)
+
+    print("FAIL", len(FAIL), '/', N)
+    if ns.diag:
+        printcase("", "", print_flags, header=True)
+        for f, e in FAIL:
+            printcase(f, e, print_flags)
 
     if len(FAIL) != 0:
         return 1
