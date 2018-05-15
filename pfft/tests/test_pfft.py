@@ -210,8 +210,8 @@ def test_2d_on_2d_c2c(comm):
     partition = pfft.Partition(pfft.Type.PFFT_C2C, N,
         procmesh, flags=pfft.Flags.PFFT_ESTIMATE
           | pfft.Flags.PFFT_TRANSPOSED_OUT
-          | pfft.Flags.PFFT_DESTROY_INPUT
-#          | pfft.Flags.PFFT_PRESERVE_INPUT
+#          | pfft.Flags.PFFT_DESTROY_INPUT
+          | pfft.Flags.PFFT_PRESERVE_INPUT
         )
 
     buffer1 = pfft.LocalBuffer(partition)
@@ -226,9 +226,12 @@ def test_2d_on_2d_c2c(comm):
     result = comm.allreduce(result)
     assert_almost_equal(correct, result)
 
-@MPITest([4])
+@MPITest([1, 4])
 def test_2d_on_2d_r2c(comm):
-    procmesh = pfft.ProcMesh(np=[2, 2], comm=comm)
+    if comm.size == 1:
+        procmesh = pfft.ProcMesh(np=[1, 1], comm=comm)
+    else:
+        procmesh = pfft.ProcMesh(np=[2, 2], comm=comm)
     N = (8, 8)
 
     data = numpy.arange(numpy.prod(N), dtype='f8').reshape(N)
@@ -239,8 +242,9 @@ def test_2d_on_2d_r2c(comm):
     partition = pfft.Partition(pfft.Type.PFFT_R2C, N,
         procmesh, flags=pfft.Flags.PFFT_ESTIMATE
           | pfft.Flags.PFFT_TRANSPOSED_OUT
-          | pfft.Flags.PFFT_DESTROY_INPUT
-#          | pfft.Flags.PFFT_PRESERVE_INPUT
+#          | pfft.Flags.PFFT_DESTROY_INPUT
+          | pfft.Flags.PFFT_PRESERVE_INPUT
+#          | pfft.Flags.PADDED_R2C # doesn't work yet
         )
 
     buffer1 = pfft.LocalBuffer(partition)
