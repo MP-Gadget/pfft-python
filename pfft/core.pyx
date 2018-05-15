@@ -526,14 +526,20 @@ cdef class Partition(object):
 
         local_ni, local_no, local_i_start, local_o_start = numpy.empty((4, n_.shape[0]), 'intp')
 
+        self.type = Type(type)
+        self.flags = Flags(flags)
+
         if len(n_) < len(procmesh.np):
             raise ValueError("ProcMesh (%d) shall have less dimentions than Mesh (%d)" % (len(procmesh.np), len(n_)))
 
-        if len(n_) == len(procmesh.np) and len(n_) != 2: # https://github.com/mpip/pfft/issues/29
-            raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported other than 2don2d." % (len(procmesh.np), len(n_)))
+        if len(n_) == len(procmesh.np):
+            if len(n_) != 2 and len(n_) != 3: # https://github.com/mpip/pfft/issues/29
+                raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported other than 2don2d or 3don3d" % (len(procmesh.np), len(n_)))
+            if (self.flags & Flags.PFFT_PADDED_R2C) | (self.flags & Flags.PFFT_PADDED_C2R):
+                if self.type in (Type.R2C, Type.C2R, Type.R2CF, Type.C2RF):
+                    # https://github.com/mpip/pfft/pull/31
+                    raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported on padded transforms." % (len(procmesh.np), len(n_)))
 
-        self.type = Type(type)
-        self.flags = Flags(flags)
         cdef pfft_local_size_func func = PFFT_LOCAL_SIZE_FUNC[self.type]
 
 
@@ -816,7 +822,9 @@ cdef class Plan(object):
             inplace = False
         if inplace != self.inplace:
             raise ValueError("inplace status mismatch with the plan")
+
         func(self.plan, i.ptr, o.ptr)
+
     def __repr__(self):
         return "Plan(" + \
                 ','.join([
