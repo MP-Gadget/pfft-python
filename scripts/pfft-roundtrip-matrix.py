@@ -25,6 +25,8 @@
        np = [n], [1, n], [n, 1], [a, d], [d, a]
     where a * d == n and a d are closest to n** 0.5
 """
+from __future__ import print_function
+
 from mpi4py import MPI
 import itertools
 import traceback
