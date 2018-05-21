@@ -20,6 +20,18 @@ curl -L -o $ROOT/depends/pfft-$PFFT_VERSION.tar.gz \
 https://github.com/rainwoodman/pfft/releases/download/$PFFT_VERSION/pfft-$PFFT_VERSION.tar.gz
 fi
 
+if ! [ -f $ROOT/depends/pfft-$PFFT_VERSION.tar.gz ]; then
+echo wget -P $ROOT/depends/ \
+https://github.com/rainwoodman/pfft/releases/download/$PFFT_VERSION/pfft-$PFFT_VERSION.tar.gz
+fi
+
+if ! [ -f $ROOT/depends/pfft-$PFFT_VERSION.tar.gz ]; then
+echo "Failed to get https://github.com/rainwoodman/pfft/releases/download/$PFFT_VERSION/pfft-$PFFT_VERSION.tar.gz"
+echo "Please check curl or wget"
+echo "You can also download it manually to $ROOT/depends/"
+exit 1
+fi
+
 gzip -dc $ROOT/depends/pfft-$PFFT_VERSION.tar.gz | tar xf - -C $TMP
 cd $TMP
 
