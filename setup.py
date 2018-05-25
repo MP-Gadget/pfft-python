@@ -104,6 +104,7 @@ setup(
                 cython_directives = {"embedsignature": True}
                 )]),
     license='GPL3',
+    scripts=['scripts/pfft-roundtrip-matrix.py'],
     cmdclass = {
         "build_py":build_py,
         "build_ext": build_ext_subclass}

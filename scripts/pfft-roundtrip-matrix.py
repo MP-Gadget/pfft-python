@@ -11,16 +11,22 @@
        inplace transform 
 
    Examples:
+
+   * to run in source code, first get a shell with
+       python runtests.py --shell
+
    * for single-rank numpy agreement test, run with
-       mpirun -np 1 python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 -tree -verbose
+       mpirun -np 1 python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 -verbose
 
    * for multi-rank tests, run with 
-       mpirun -np n python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 -tree -verbose
+       mpirun -np 4 python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 --verbose
 
    n can be any number. procmeshes tested are:
        np = [n], [1, n], [n, 1], [a, d], [d, a]
     where a * d == n and a d are closest to n** 0.5
 """
+from __future__ import print_function
+
 from mpi4py import MPI
 import itertools
 import traceback
@@ -28,52 +34,46 @@ import numpy
 import argparse
 
 import os.path
-from sys import path
 
 parser = argparse.ArgumentParser(description='Roundtrip testing of pfft', 
         epilog=__doc__,
        formatter_class=argparse.RawDescriptionHelpFormatter 
         )
 
-parser.add_argument('-Nmesh', nargs=3, type=int,
-        action='append', metavar=('Nx', 'Ny', 'Nz'), 
+from pfft import *
+
+oldprint = print
+def print(*args, **kwargs):
+    if MPI.COMM_WORLD.rank == 0:
+        oldprint(*args, **kwargs)
+
+parser.add_argument('-Nmesh', nargs='+', type=int,
+        action='append',
         help='size of FFT mesh, default is 29 30 31',
         default=[])
-parser.add_argument('-Nproc', nargs=2, type=int,
-        action='append', metavar=('Nx', 'Ny'), 
+parser.add_argument('-Nproc', nargs='+', type=int,
+        action='append',
         help='proc mesh',
         default=[])
-parser.add_argument('-tree', action='store_true', default=False,
-        help='Use pfft from source tree, ' +
-        'built with setup.py build_ext --inplace')
 parser.add_argument('-diag', action='store_true', default=False,
         help='show which one failed and which one passed')
+parser.add_argument('-rigor', default="estimate", choices=['estimate', 'measure', 'patient', 'exhaustive'],
+        help='the level of rigor in planning. ')
 parser.add_argument('-verbose', action='store_true', default=False,
         help='print which test will be ran')
-
-ns = parser.parse_args()
-Nmesh = ns.Nmesh
-if len(Nmesh) == 0:
-    # default 
-    Nmesh = [[29, 30, 31]]
-if ns.tree:
-    # prefers to use the locally built pfft in source tree, in case there is an
-    # installation
-    path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
-from pfft import *
 
 class LargeError(Exception):
     pass
 
 def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
+
     partition = Partition(type, Nmesh, procmesh, flags)
     for rank in range(MPI.COMM_WORLD.size):
         MPI.COMM_WORLD.barrier()
         if rank != procmesh.rank:
             continue
-        #print procmesh.rank, 'roundtrip test, np=', procmesh.np, 'Nmesh = ', Nmesh, 'inplace = ', inplace
-        #print repr(partition)
+        #oldprint(procmesh.rank, 'roundtrip test, np=', procmesh.np, 'Nmesh = ', Nmesh, 'inplace = ', inplace)
+        #oldprint(repr(partition))
 
     buf1 = LocalBuffer(partition)
     if inplace:
@@ -96,9 +96,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
             buf2,
             type=type,
             flags=flags)
-    if procmesh.rank == 0:
-        #print repr(forward)
-        pass
+    # print(repr(forward))
 
     # find the inverse plan
     typemap = {
@@ -139,9 +137,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
             type=btype, 
             flags=bflags,
             )
-    if procmesh.rank == 0:
-        #print repr(backward)
-        pass
+    #print(repr(backward))
 
     numpy.random.seed(9999)
 
@@ -183,8 +179,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
         MPI.COMM_WORLD.barrier()
         if rank != procmesh.rank:
             continue
-        if False:
-            print('error', original - input)
+        # oldprint('error', original - input)
         MPI.COMM_WORLD.barrier()
     if False:
         print(repr(forward.type), 'forward', "error = ", r2cerr)
@@ -193,29 +188,43 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     r2cerr = MPI.COMM_WORLD.allreduce(r2cerr, MPI.MAX)
     c2rerr = MPI.COMM_WORLD.allreduce(c2rerr, MPI.MAX)
     if (r2cerr > 5e-4):
-        raise LargeError("r2c: %g" % r2cerr)
+        raise LargeError("forward: %g" % r2cerr)
 
     if (c2rerr > 5e-4):
-        raise LargeError("c2r: %g" % c2rerr)
+        raise LargeError("backward: %g" % c2rerr)
 
-if MPI.COMM_WORLD.size == 1: 
-    nplist = [
-            [1],
-            [1, 1],
-            ]
-else:
-    nplist = ns.Nproc
-            
+def main():
 
-try:
-    flags = [
-            Flags.PFFT_ESTIMATE | Flags.PFFT_DESTROY_INPUT,
-            Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_DESTROY_INPUT,
-            Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C,
-            Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT,
-            Flags.PFFT_ESTIMATE | Flags.PFFT_TRANSPOSED_OUT | Flags.PFFT_DESTROY_INPUT,
-            Flags.PFFT_ESTIMATE | Flags.PFFT_PADDED_R2C | Flags.PFFT_TRANSPOSED_OUT,
-            ]
+    ns = parser.parse_args()
+    Nmesh = ns.Nmesh
+
+    if len(Nmesh) == 0:
+        # default 
+        Nmesh = [[29, 30, 31]]
+
+    if MPI.COMM_WORLD.size == 1 and len(ns.Nproc) == 0:
+        nplist = [ [1], [1, 1], ]
+    else:
+        nplist = ns.Nproc
+
+    rigor = {
+            'exhaustive': Flags.PFFT_EXHAUSTIVE,
+            'patient' : Flags.PFFT_PATIENT,
+            'estimate' : Flags.PFFT_ESTIMATE,
+            'measure' : Flags.PFFT_MEASURE,
+            }[ns.rigor]
+    import itertools
+    import functools
+
+    flags = []
+    matrix = Flags.PFFT_DESTROY_INPUT, Flags.PFFT_PADDED_R2C, Flags.PFFT_TRANSPOSED_OUT
+    print_flags = functools.reduce(lambda x, y: x | y, matrix, rigor)
+
+    matrix2 = [[0, i] for i in matrix]
+    for row in itertools.product(*matrix2):
+        flag = functools.reduce(lambda x, y: x | y, row, rigor)
+        flags.append(flag)
+
     params = list(itertools.product(
             nplist, [Type.PFFT_C2C, Type.PFFT_R2C, Type.PFFTF_C2C, Type.PFFTF_R2C], flags, [True, False],
             Nmesh,
@@ -223,11 +232,11 @@ try:
 
     PASS = []
     FAIL = []
+    IMPL = []
     for param in params:
-        if MPI.COMM_WORLD.rank == 0:
-            if ns.verbose:
-                f = param
-                print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4])
+        if ns.verbose:
+            f = param
+            print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4])
         np = param[0]
         procmesh = ProcMesh(np=np)
         try:
@@ -236,19 +245,78 @@ try:
         except LargeError as e:
             if ns.verbose:
                 f = param
-                print("Failed", e)
+                print("Failed", f, e)
             FAIL.append((param, e))
+        except NotImplementedError as e:
+            if ns.verbose:
+                f = param
+                print("notsupported", f, e)
+            IMPL.append((param, e))
 
-    if MPI.COMM_WORLD.rank == 0:
-        print("PASS", len(PASS), '/', len(params))
-        if ns.diag:
-            for f in PASS:
-                print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4])
-        print("FAIL", len(FAIL), '/', len(params))
-        if ns.diag:
-            for f, e in FAIL:
-                print("NP", f[0], repr(Type(f[1])), repr(Flags(f[2])), "InPlace", f[3], "Nmesh", f[4], e)
-        assert len(FAIL) == 0
-except Exception as e:
-    print(traceback.format_exc())
-    MPI.COMM_WORLD.Abort()
+    N = len(PASS) + len(FAIL) + len(IMPL)
+
+    print("PASS", len(PASS), '/', N)
+
+    if ns.diag:
+        printcase("", "", print_flags, header=True)
+        for f in PASS:
+            printcase(f, "", print_flags, )
+
+    print("UNIMPL", len(IMPL), '/', N)
+    if ns.diag:
+        printcase("", "", print_flags, header=True)
+        for f, e in IMPL:
+            printcase(f, e, print_flags)
+
+    print("FAIL", len(FAIL), '/', N)
+    if ns.diag:
+        printcase("", "", print_flags, header=True)
+        for f, e in FAIL:
+            printcase(f, e, print_flags)
+
+    if len(FAIL) != 0:
+        return 1
+
+    return 0
+
+def printcase(f, e, flags, header=False):
+    if header:
+        inplace = "INPLACE"
+        np = "NP"
+        flags = "FLAGS"
+        type = "TYPE"
+        nmesh = "NMESH"
+        error = "ERROR"
+    else:
+        inplace = "INPL" if f[3] else "OUTP"
+        np = str(f[0])
+        flags = Flags(f[2]).format(flags)
+        type = repr(Type(f[1]))
+        nmesh = str(f[4])
+        error = str(e)
+    print("%(np)-6s %(nmesh)-8s %(type)-6s %(inplace)-6s %(flags)-80s %(error)-s" % locals())
+
+# use unbuffered stdout
+class Unbuffered(object):
+   def __init__(self, stream):
+       self.stream = stream
+   def write(self, data):
+       self.stream.write(data)
+       self.stream.flush()
+   def writelines(self, datas):
+       self.stream.writelines(datas)
+       self.stream.flush()
+   def __getattr__(self, attr):
+       return getattr(self.stream, attr)
+
+import sys
+sys.stdout = Unbuffered(sys.stdout)
+
+if __name__ == '__main__':
+
+    try:
+        sys.exit(main())
+    except Exception as e:
+        print(traceback.format_exc())
+        MPI.COMM_WORLD.Abort()
+

@@ -187,12 +187,42 @@ class Flags(int):
     PFFT_BUFFERED_INPLACE = _PFFT_BUFFERED_INPLACE
     PFFT_PADDED_R2C = _PFFT_PADDED_R2C
     PFFT_PADDED_C2R = _PFFT_PADDED_C2R
+    TRANSPOSED_NONE = _PFFT_TRANSPOSED_NONE
+    TRANSPOSED_IN = _PFFT_TRANSPOSED_IN
+    TRANSPOSED_OUT = _PFFT_TRANSPOSED_OUT
+    SHIFTED_NONE = _PFFT_SHIFTED_NONE
+    SHIFTED_IN = _PFFT_SHIFTED_IN
+    SHIFTED_OUT = _PFFT_SHIFTED_OUT
+    MEASURE = _PFFT_MEASURE
+    ESTIMATE = _PFFT_ESTIMATE
+    PATIENT = _PFFT_PATIENT
+    EXHAUSTIVE = _PFFT_EXHAUSTIVE
+    NO_TUNE = _PFFT_NO_TUNE
+    TUNE = _PFFT_TUNE
+    PRESERVE_INPUT = _PFFT_PRESERVE_INPUT
+    DESTROY_INPUT = _PFFT_DESTROY_INPUT
+    BUFFERED_INPLACE = _PFFT_BUFFERED_INPLACE
+    PADDED_R2C = _PFFT_PADDED_R2C
+    PADDED_C2R = _PFFT_PADDED_C2R
     def __new__(cls, value):
         self = int.__new__(cls, value)
         return self
     def __repr__(self):
         d = self.__class__.__dict__
-        return '|'.join([k for k in d.keys() if k.startswith('PFFT') and (d[k] & self)])
+        keys = sorted([k for k in d.keys() if k.isupper() and not k.startswith('PFFT')])
+        return '|'.join([k for k in keys if (d[k] & self)])
+
+    def format(self, flags=None):
+        d = self.__class__.__dict__
+        keys = sorted([k for k in d.keys() if k.isupper() and not k.startswith('PFFT')])
+        s = []
+        for key in keys:
+            if flags is not None and not (d[key] & flags): continue
+            if d[key] & self:
+                s.append(key)
+            else:
+                s.append(" " * len(key))
+        return ' '.join(s)
 
 class Direction(int):
     """ 
@@ -200,12 +230,15 @@ class Direction(int):
     """
     PFFT_FORWARD = _PFFT_FORWARD
     PFFT_BACKWARD = _PFFT_BACKWARD
+    FORWARD = _PFFT_FORWARD
+    BACKWARD = _PFFT_BACKWARD
     def __new__(cls, value):
         self = int.__new__(cls, value)
         return self
     def __repr__(self):
         d = self.__class__.__dict__
-        return 'and'.join([k for k in d.keys() if k.startswith('PFFT') and (d[k] == self)])
+        keys = sorted([k for k in d.keys() if k.isupper() and not k.startswith('PFFT')])
+        return 'and'.join([k for k in keys if (d[k] == self)])
 
 ######
 # define Type as the transform type
@@ -225,12 +258,21 @@ class Type(int):
     PFFTF_R2C = 5
     PFFTF_C2R = 6
     PFFTF_R2R = 7
+    C2C = 0
+    R2C = 1
+    C2R = 2
+    R2R = 3
+    C2CF = 4
+    R2CF = 5
+    C2RF = 6
+    R2RF = 7
     def __new__(cls, value):
         self = int.__new__(cls, value)
         return self
     def __repr__(self):
         d = self.__class__.__dict__
-        return 'and'.join([k for k in d.keys() if k.startswith('PFFT') and (d[k] == self)])
+        keys = sorted([k for k in d.keys() if k.isupper() and not k.startswith('PFFT')])
+        return 'and'.join([k for k in keys if (d[k] == self)])
 
 ctypedef numpy.intp_t (*pfft_local_size_func)(int rnk_n, numpy.intp_t * n, cMPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
@@ -484,14 +526,20 @@ cdef class Partition(object):
 
         local_ni, local_no, local_i_start, local_o_start = numpy.empty((4, n_.shape[0]), 'intp')
 
+        self.type = Type(type)
+        self.flags = Flags(flags)
+
         if len(n_) < len(procmesh.np):
             raise ValueError("ProcMesh (%d) shall have less dimentions than Mesh (%d)" % (len(procmesh.np), len(n_)))
 
-        if len(n_) == len(procmesh.np): # https://github.com/mpip/pfft/issues/29
-            raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported." % (len(procmesh.np), len(n_)))
+        if len(n_) == len(procmesh.np):
+            if len(n_) != 2 and len(n_) != 3: # https://github.com/mpip/pfft/issues/29
+                raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported other than 2don2d or 3don3d" % (len(procmesh.np), len(n_)))
+            if (self.flags & Flags.PFFT_PADDED_R2C) | (self.flags & Flags.PFFT_PADDED_C2R):
+                if self.type in (Type.R2C, Type.C2R, Type.R2CF, Type.C2RF):
+                    # https://github.com/mpip/pfft/pull/31
+                    raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported on padded transforms." % (len(procmesh.np), len(n_)))
 
-        self.type = Type(type)
-        self.flags = Flags(flags)
         cdef pfft_local_size_func func = PFFT_LOCAL_SIZE_FUNC[self.type]
 
 
@@ -774,7 +822,9 @@ cdef class Plan(object):
             inplace = False
         if inplace != self.inplace:
             raise ValueError("inplace status mismatch with the plan")
+
         func(self.plan, i.ptr, o.ptr)
+
     def __repr__(self):
         return "Plan(" + \
                 ','.join([
