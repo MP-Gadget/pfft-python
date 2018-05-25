@@ -535,10 +535,12 @@ cdef class Partition(object):
         if len(n_) == len(procmesh.np):
             if len(n_) != 2 and len(n_) != 3: # https://github.com/mpip/pfft/issues/29
                 raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported other than 2don2d or 3don3d" % (len(procmesh.np), len(n_)))
-            if (self.flags & Flags.PFFT_PADDED_R2C) | (self.flags & Flags.PFFT_PADDED_C2R):
-                if self.type in (Type.R2C, Type.C2R, Type.R2CF, Type.C2RF):
-                    # https://github.com/mpip/pfft/pull/31
-                    raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported on padded transforms." % (len(procmesh.np), len(n_)))
+
+            if ( ((self.flags & Flags.PFFT_PADDED_R2C) | (self.flags & Flags.PFFT_PADDED_C2R))
+             and ( self.type in (Type.R2C, Type.C2R, Type.R2CF, Type.C2RF))
+               ):
+                # https://github.com/mpip/pfft/pull/31
+                raise NotImplementedError("Currently using the same ProcMesh (%d) dimentions with Mesh (%d) is not supported on padded transforms." % (len(procmesh.np), len(n_)))
 
         cdef pfft_local_size_func func = PFFT_LOCAL_SIZE_FUNC[self.type]
 
@@ -823,7 +825,7 @@ cdef class Plan(object):
          and not (self.flags & Flags.PFFT_PADDED_R2C)
          and not self.inplace
         ):
-            raise NotImplementedError("out place non-padded r2c / c2r does not preserve input. "
+            raise NotImplementedError("out place non-padded r2c / c2r does not preserve input.(%s) " % repr(self.flags)
                                     + "Provide PFFT_DESTROY_INPUT as a flag and deal with this quirk.")
 
         self.plan = func(n_.shape[0], &n_[0], i.ptr, o.ptr,
