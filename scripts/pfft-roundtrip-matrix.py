@@ -67,6 +67,10 @@ class LargeError(Exception):
 
 def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
 
+    # if not requesting destroy input, preserve it
+    if not (flags & Flags.PFFT_DESTROY_INPUT):
+        flags |= Flags.PFFT_PRESERVE_INPUT
+
     partition = Partition(type, Nmesh, procmesh, flags)
     for rank in range(MPI.COMM_WORLD.size):
         MPI.COMM_WORLD.barrier()
@@ -158,6 +162,11 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
 
     forward.execute(buf1, buf2)
 
+    if not (flags & Flags.PFFT_DESTROY_INPUT) and not inplace:
+        fpreserr = numpy.abs(original - input).max()
+    else:
+        fpreserr = 0.0
+
     if output.size > 0:
         r2cerr = numpy.abs(output - correct).max()
     else:
@@ -167,6 +176,11 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     output[:] = correct
 
     backward.execute(buf2, buf1)
+
+    if not (flags & Flags.PFFT_DESTROY_INPUT) and not inplace:
+        bpreserr = numpy.abs(output - correct).max()
+    else:
+        bpreserr = 0.0
 
     if input.size > 0:
         input[:] /= numpy.product(Nmesh)
@@ -181,17 +195,33 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
             continue
         # oldprint('error', original - input)
         MPI.COMM_WORLD.barrier()
-    if False:
-        print(repr(forward.type), 'forward', "error = ", r2cerr)
-        print(repr(forward.type), 'backward', "error = ", c2rerr)
 
+    #if True:
+    #    print(repr(forward.type), 'preserve', "error = ", fpreserr)
+    #    print(repr(forward.type), 'forward', "error = ", r2cerr)
+    #    print(repr(forward.type), 'backward', "error = ", c2rerr)
+    
+    fpreserr = MPI.COMM_WORLD.allreduce(fpreserr, MPI.MAX)
+    bpreserr = MPI.COMM_WORLD.allreduce(bpreserr, MPI.MAX)
     r2cerr = MPI.COMM_WORLD.allreduce(r2cerr, MPI.MAX)
     c2rerr = MPI.COMM_WORLD.allreduce(c2rerr, MPI.MAX)
+
+    exc = []
+
+    if (fpreserr > 5e-4):
+        exc.append("forward changed input: %g" % fpreserr)
+
+    if (bpreserr > 5e-4):
+        exc.append("backward changed input: %g" % bpreserr)
+
     if (r2cerr > 5e-4):
-        raise LargeError("forward: %g" % r2cerr)
+        exc.append("forward: %g" % r2cerr)
 
     if (c2rerr > 5e-4):
-        raise LargeError("backward: %g" % c2rerr)
+        exc.append("backward: %g" % c2rerr)
+
+    if len(exc) > 0:
+        raise LargeError(":".join(exc))
 
 def main():
 
@@ -223,6 +253,7 @@ def main():
     matrix2 = [[0, i] for i in matrix]
     for row in itertools.product(*matrix2):
         flag = functools.reduce(lambda x, y: x | y, row, rigor)
+
         flags.append(flag)
 
     params = list(itertools.product(
