@@ -792,7 +792,7 @@ cdef class Plan(object):
                 iCFT(CFT) = dx * dk * DFT(iDFT)
                           = L / N * (2pi / L) * N
                           = 2 pi
-                
+
             example:
                 plan = Plan(partition, Direction.PFFT_FORWARD, buf1, buf2)
 
@@ -817,6 +817,15 @@ cdef class Plan(object):
             self.inplace = True
         else:
             self.inplace = False
+
+        if ( (self.type in (Type.PFFT_R2C, Type.PFFT_C2R, Type.PFFTF_R2C, Type.PFFT_C2R) )
+         and (self.flags & Flags.PFFT_PRESERVE_INPUT)
+         and not (self.flags & Flags.PFFT_PADDED_R2C)
+         and not self.inplace
+        ):
+            raise NotImplementedError("out place non-padded r2c / c2r does not preserve input. "
+                                    + "Provide PFFT_DESTROY_INPUT as a flag and deal with this quirk.")
+
         self.plan = func(n_.shape[0], &n_[0], i.ptr, o.ptr,
                 procmesh.ccart,
                 self.direction,
