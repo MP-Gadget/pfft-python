@@ -713,6 +713,24 @@ cdef class LocalBuffer:
         elif PFFT_NPY_TYPE[self.partition.type] == numpy.NPY_FLOAT:
             self.ptr = pfftf_alloc_complex(partition.alloc_local)
 
+    def view_raw(self, type=numpy.ndarray):
+        cdef numpy.dtype dt
+        if PFFT_NPY_TYPE[self.partition.type] == numpy.NPY_DOUBLE:
+            dt = numpy.dtype('f8')
+        else:
+            dt = numpy.dtype('f4')
+        cdef numpy.intp_t alloc_local = 2 * self.partition.alloc_local
+        cdef numpy.intp_t strides = dt.itemsize
+        cdef numpy.ndarray a = numpy.PyArray_New(type,
+                1,
+                <numpy.intp_t*>&alloc_local,
+                dt.type_num,
+                <numpy.intp_t*>&strides,
+                self.ptr, dt.itemsize, numpy.NPY_BEHAVED, None)
+
+        numpy.set_array_base(a, self)
+        return a
+
     def view_input(self, type=numpy.ndarray):
         cdef numpy.dtype dt = self.partition.i_dtype
         cdef numpy.ndarray a = numpy.PyArray_New(type,
