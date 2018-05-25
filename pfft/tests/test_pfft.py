@@ -127,6 +127,8 @@ def test_raw(comm):
 
     buffer1 = pfft.LocalBuffer(partition)
     assert buffer1.view_raw().size == 2 * partition.alloc_local
+
+@MPITest(1)
 def test_transpose_1d_decom(comm):
     procmesh = pfft.ProcMesh(np=[1,], comm=comm)
     N = (1, 2, 3, 4)
@@ -250,8 +252,7 @@ def test_2d_on_2d_r2c(comm):
     partition = pfft.Partition(pfft.Type.PFFT_R2C, N,
         procmesh, flags=pfft.Flags.PFFT_ESTIMATE
           | pfft.Flags.PFFT_TRANSPOSED_OUT
-#          | pfft.Flags.PFFT_DESTROY_INPUT
-          | pfft.Flags.PFFT_PRESERVE_INPUT
+          | pfft.Flags.PFFT_DESTROY_INPUT
 #          | pfft.Flags.PADDED_R2C # doesn't work yet
         )
 
