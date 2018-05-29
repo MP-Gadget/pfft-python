@@ -701,19 +701,39 @@ cdef class Partition(object):
 
 cdef class LocalBuffer:
     cdef void * ptr
-
+    cdef readonly numpy.intp_t address
     cdef readonly Partition partition
+    cdef readonly LocalBuffer base
 
-    def __init__(self, partition):
+    # keep track of base because the python object may be destroyed
+    # before dealloc is called
+    cdef int _has_base
+
+    def __init__(self, partition, LocalBuffer base=None):
         """ The local portion of the distributed array used by PFFT 
 
             see the documents of view_input, view_output
         """
         self.partition = partition
-        if PFFT_NPY_TYPE[self.partition.type] == numpy.NPY_DOUBLE:
-            self.ptr = pfft_alloc_complex(partition.alloc_local)
-        elif PFFT_NPY_TYPE[self.partition.type] == numpy.NPY_FLOAT:
-            self.ptr = pfftf_alloc_complex(partition.alloc_local)
+
+        self.base = base
+
+        if base is None:
+            if PFFT_NPY_TYPE[self.partition.type] == numpy.NPY_DOUBLE:
+                self.ptr = pfft_alloc_complex(partition.alloc_local)
+            elif PFFT_NPY_TYPE[self.partition.type] == numpy.NPY_FLOAT:
+                self.ptr = pfftf_alloc_complex(partition.alloc_local)
+            self._has_base = 0
+        else:
+            assert base.partition.alloc_local == self.partition.alloc_local
+            #FIXME: check procmesh
+            self.ptr = base.ptr
+            self._has_base = 1
+
+        self.address = <numpy.intp_t> self.ptr
+
+    def __contains__(self, LocalBuffer other):
+        return self.address == other.address
 
     def view_raw(self, type=numpy.ndarray):
         cdef numpy.dtype dt
@@ -762,7 +782,8 @@ cdef class LocalBuffer:
 
 
     def __dealloc__(self):
-        pfft_free(self.ptr)
+        if not self._has_base:
+            pfft_free(self.ptr)
 
 cdef class Plan(object):
     cdef pfft_plan plan

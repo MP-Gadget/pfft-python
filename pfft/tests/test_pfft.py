@@ -129,6 +129,31 @@ def test_raw(comm):
     assert buffer1.view_raw().size == 2 * partition.alloc_local
 
 @MPITest(1)
+def test_reuse_local_buffer(comm):
+    procmesh = pfft.ProcMesh(np=[1], comm=comm)
+
+    partition1 = pfft.Partition(pfft.Type.PFFT_R2C, [8, 8],
+        procmesh, flags=pfft.Flags.PFFT_ESTIMATE | pfft.Flags.PFFT_TRANSPOSED_OUT)
+
+    partition2 = pfft.Partition(pfft.Type.PFFT_R2C, [8, 8],
+        procmesh, flags=pfft.Flags.PFFT_ESTIMATE)
+
+    buffer1 = pfft.LocalBuffer(partition1)
+    buffer2 = pfft.LocalBuffer(partition2, base=buffer1)
+    buffer3 = pfft.LocalBuffer(partition1)
+
+    assert buffer1 is not buffer2
+    assert buffer1.address == buffer2.address
+
+    assert buffer1 in buffer2
+    assert buffer2 in buffer1
+
+    assert buffer1 not in buffer3
+    assert buffer3 not in buffer1
+    assert buffer2 not in buffer3
+    assert buffer3 not in buffer2
+
+@MPITest(1)
 def test_transpose_1d_decom(comm):
     procmesh = pfft.ProcMesh(np=[1,], comm=comm)
     N = (1, 2, 3, 4)
