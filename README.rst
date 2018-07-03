@@ -9,10 +9,14 @@ performance, see:
     https://www-user.tu-chemnitz.de/~potts/workgroup/pippig/software.php.en
 
 This is the python binding of PFFT. 
+The API document is at
+
+    http://rainwoodman.github.io/pfft-python/index.html
 
 .. image:: https://api.travis-ci.org/rainwoodman/pfft-python.svg
     :alt: Build Status
     :target: https://travis-ci.org/rainwoodman/pfft-python/
+
 
 DOI of pfft-python:
 
