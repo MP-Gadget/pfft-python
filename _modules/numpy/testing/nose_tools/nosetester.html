@@ -1,0 +1,645 @@
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>numpy.testing.nose_tools.nosetester &#8212; PFFT-Python 0.1.20 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">PFFT-Python 0.1.20 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for numpy.testing.nose_tools.nosetester</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Nose test running.</span>
+
+<span class="sd">This module implements ``test()`` and ``bench()`` functions for NumPy modules.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">numpy.compat</span> <span class="k">import</span> <span class="n">basestring</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">import_nose</span><span class="p">,</span> <span class="n">suppress_warnings</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;get_package_name&#39;</span><span class="p">,</span> <span class="s1">&#39;run_module_suite&#39;</span><span class="p">,</span> <span class="s1">&#39;NoseTester&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;_numpy_tester&#39;</span><span class="p">,</span> <span class="s1">&#39;get_package_name&#39;</span><span class="p">,</span> <span class="s1">&#39;import_nose&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;suppress_warnings&#39;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">get_package_name</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a path where a package is installed, determine its name.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filepath : str</span>
+<span class="sd">        Path to a file. If the determination fails, &quot;numpy&quot; is returned.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; np.testing.nosetester.get_package_name(&#39;nonsense&#39;)</span>
+<span class="sd">    &#39;numpy&#39;</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">fullpath</span> <span class="o">=</span> <span class="n">filepath</span><span class="p">[:]</span>
+    <span class="n">pkg_name</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">while</span> <span class="s1">&#39;site-packages&#39;</span> <span class="ow">in</span> <span class="n">filepath</span> <span class="ow">or</span> <span class="s1">&#39;dist-packages&#39;</span> <span class="ow">in</span> <span class="n">filepath</span><span class="p">:</span>
+        <span class="n">filepath</span><span class="p">,</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p2</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;site-packages&#39;</span><span class="p">,</span> <span class="s1">&#39;dist-packages&#39;</span><span class="p">):</span>
+            <span class="k">break</span>
+        <span class="n">pkg_name</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p2</span><span class="p">)</span>
+
+    <span class="c1"># if package name determination failed, just default to numpy/scipy</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pkg_name</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;scipy&#39;</span> <span class="ow">in</span> <span class="n">fullpath</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;scipy&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;numpy&#39;</span>
+
+    <span class="c1"># otherwise, reverse to get correct order and return</span>
+    <span class="n">pkg_name</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+
+    <span class="c1"># don&#39;t include the outer egg directory</span>
+    <span class="k">if</span> <span class="n">pkg_name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.egg&#39;</span><span class="p">):</span>
+        <span class="n">pkg_name</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pkg_name</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">run_module_suite</span><span class="p">(</span><span class="n">file_to_run</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">argv</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run a test module.</span>
+
+<span class="sd">    Equivalent to calling ``$ nosetests &lt;argv&gt; &lt;file_to_run&gt;`` from</span>
+<span class="sd">    the command line</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    file_to_run : str, optional</span>
+<span class="sd">        Path to test module, or None.</span>
+<span class="sd">        By default, run the module from which this function is called.</span>
+<span class="sd">    argv : list of strings</span>
+<span class="sd">        Arguments to be passed to the nose test runner. ``argv[0]`` is</span>
+<span class="sd">        ignored. All command line arguments accepted by ``nosetests``</span>
+<span class="sd">        will work. If it is the default value None, sys.argv is used.</span>
+
+<span class="sd">        .. versionadded:: 1.9.0</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Adding the following::</span>
+
+<span class="sd">        if __name__ == &quot;__main__&quot; :</span>
+<span class="sd">            run_module_suite(argv=sys.argv)</span>
+
+<span class="sd">    at the end of a test module will run the tests when that module is</span>
+<span class="sd">    called in the python interpreter.</span>
+
+<span class="sd">    Alternatively, calling::</span>
+
+<span class="sd">    &gt;&gt;&gt; run_module_suite(file_to_run=&quot;numpy/tests/test_matlib.py&quot;)</span>
+
+<span class="sd">    from an interpreter will run all the test routine in &#39;test_matlib.py&#39;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">file_to_run</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">file_to_run</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">f_locals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;__file__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">file_to_run</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span>
+
+    <span class="k">if</span> <span class="n">argv</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">argv</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span> <span class="o">+</span> <span class="p">[</span><span class="n">file_to_run</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">argv</span> <span class="o">=</span> <span class="n">argv</span> <span class="o">+</span> <span class="p">[</span><span class="n">file_to_run</span><span class="p">]</span>
+
+    <span class="n">nose</span> <span class="o">=</span> <span class="n">import_nose</span><span class="p">()</span>
+    <span class="kn">from</span> <span class="nn">.noseclasses</span> <span class="k">import</span> <span class="n">KnownFailurePlugin</span>
+    <span class="n">nose</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="n">argv</span><span class="p">,</span> <span class="n">addplugins</span><span class="o">=</span><span class="p">[</span><span class="n">KnownFailurePlugin</span><span class="p">()])</span>
+
+
+<span class="k">class</span> <span class="nc">NoseTester</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Nose test runner.</span>
+
+<span class="sd">    This class is made available as numpy.testing.Tester, and a test function</span>
+<span class="sd">    is typically added to a package&#39;s __init__.py like so::</span>
+
+<span class="sd">      from numpy.testing import Tester</span>
+<span class="sd">      test = Tester().test</span>
+
+<span class="sd">    Calling this test function finds and runs all tests associated with the</span>
+<span class="sd">    package and all its sub-packages.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    package_path : str</span>
+<span class="sd">        Full path to the package to test.</span>
+<span class="sd">    package_name : str</span>
+<span class="sd">        Name of the package to test.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    package : module, str or None, optional</span>
+<span class="sd">        The package to test. If a string, this should be the full path to</span>
+<span class="sd">        the package. If None (default), `package` is set to the module from</span>
+<span class="sd">        which `NoseTester` is initialized.</span>
+<span class="sd">    raise_warnings : None, str or sequence of warnings, optional</span>
+<span class="sd">        This specifies which warnings to configure as &#39;raise&#39; instead</span>
+<span class="sd">        of being shown once during the test execution.  Valid strings are:</span>
+
+<span class="sd">          - &quot;develop&quot; : equals ``(Warning,)``</span>
+<span class="sd">          - &quot;release&quot; : equals ``()``, don&#39;t raise on any warnings.</span>
+
+<span class="sd">        Default is &quot;release&quot;.</span>
+<span class="sd">    depth : int, optional</span>
+<span class="sd">        If `package` is None, then this can be used to initialize from the</span>
+<span class="sd">        module of the caller of (the caller of (...)) the code that</span>
+<span class="sd">        initializes `NoseTester`. Default of 0 means the module of the</span>
+<span class="sd">        immediate caller; higher values are useful for utility routines that</span>
+<span class="sd">        want to initialize `NoseTester` objects on behalf of other code.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">package</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">raise_warnings</span><span class="o">=</span><span class="s2">&quot;release&quot;</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                 <span class="n">check_fpu_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># Back-compat: &#39;None&#39; used to mean either &quot;release&quot; or &quot;develop&quot;</span>
+        <span class="c1"># depending on whether this was a release or develop version of</span>
+        <span class="c1"># numpy. Those semantics were fine for testing numpy, but not so</span>
+        <span class="c1"># helpful for downstream projects like scipy that use</span>
+        <span class="c1"># numpy.testing. (They want to set this based on whether *they* are a</span>
+        <span class="c1"># release or develop version, not whether numpy is.) So we continue to</span>
+        <span class="c1"># accept &#39;None&#39; for back-compat, but it&#39;s now just an alias for the</span>
+        <span class="c1"># default &quot;release&quot;.</span>
+        <span class="k">if</span> <span class="n">raise_warnings</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">raise_warnings</span> <span class="o">=</span> <span class="s2">&quot;release&quot;</span>
+
+        <span class="n">package_name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">package</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">_getframe</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">depth</span><span class="p">)</span>
+            <span class="n">package_path</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">f_locals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;__file__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">package_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AssertionError</span>
+            <span class="n">package_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">package_path</span><span class="p">)</span>
+            <span class="n">package_name</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">f_locals</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;__name__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">os</span><span class="p">)):</span>
+            <span class="n">package_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">package</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span>
+            <span class="n">package_name</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="s1">&#39;__name__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">package_path</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">package</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">package_path</span> <span class="o">=</span> <span class="n">package_path</span>
+
+        <span class="c1"># Find the package name under test; this name is used to limit coverage</span>
+        <span class="c1"># reporting (if enabled).</span>
+        <span class="k">if</span> <span class="n">package_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">package_name</span> <span class="o">=</span> <span class="n">get_package_name</span><span class="p">(</span><span class="n">package_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">package_name</span> <span class="o">=</span> <span class="n">package_name</span>
+
+        <span class="c1"># Set to &quot;release&quot; in constructor in maintenance branches.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raise_warnings</span> <span class="o">=</span> <span class="n">raise_warnings</span>
+
+        <span class="c1"># Whether to check for FPU mode changes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">check_fpu_mode</span> <span class="o">=</span> <span class="n">check_fpu_mode</span>
+
+    <span class="k">def</span> <span class="nf">_test_argv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">extra_argv</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Generate argv for nosetest command</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        label : {&#39;fast&#39;, &#39;full&#39;, &#39;&#39;, attribute identifier}, optional</span>
+<span class="sd">            see ``test`` docstring</span>
+<span class="sd">        verbose : int, optional</span>
+<span class="sd">            Verbosity value for test outputs, in the range 1-10. Default is 1.</span>
+<span class="sd">        extra_argv : list, optional</span>
+<span class="sd">            List with any extra arguments to pass to nosetests.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        argv : list</span>
+<span class="sd">            command line arguments that will be passed to nose</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="n">argv</span> <span class="o">=</span> <span class="p">[</span><span class="vm">__file__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">package_path</span><span class="p">,</span> <span class="s1">&#39;-s&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">and</span> <span class="n">label</span> <span class="o">!=</span> <span class="s1">&#39;full&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">basestring</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Selection label should be a string&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">label</span> <span class="o">==</span> <span class="s1">&#39;fast&#39;</span><span class="p">:</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="s1">&#39;not slow&#39;</span>
+            <span class="n">argv</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;-A&#39;</span><span class="p">,</span> <span class="n">label</span><span class="p">]</span>
+        <span class="n">argv</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;--verbosity&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">verbose</span><span class="p">)]</span>
+
+        <span class="c1"># When installing with setuptools, and also in some other cases, the</span>
+        <span class="c1"># test_*.py files end up marked +x executable. Nose, by default, does</span>
+        <span class="c1"># not run files marked with +x as they might be scripts. However, in</span>
+        <span class="c1"># our case nose only looks for test_*.py files under the package</span>
+        <span class="c1"># directory, which should be safe.</span>
+        <span class="n">argv</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;--exe&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">extra_argv</span><span class="p">:</span>
+            <span class="n">argv</span> <span class="o">+=</span> <span class="n">extra_argv</span>
+        <span class="k">return</span> <span class="n">argv</span>
+
+    <span class="k">def</span> <span class="nf">_show_system_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">nose</span> <span class="o">=</span> <span class="n">import_nose</span><span class="p">()</span>
+
+        <span class="kn">import</span> <span class="nn">numpy</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;NumPy version </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">numpy</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+        <span class="n">relaxed_strides</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">order</span><span class="o">=</span><span class="s2">&quot;C&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">f_contiguous</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;NumPy relaxed strides checking option:&quot;</span><span class="p">,</span> <span class="n">relaxed_strides</span><span class="p">)</span>
+        <span class="n">npdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;NumPy is installed in </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">npdir</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;scipy&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">package_name</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">scipy</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SciPy version </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">scipy</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+            <span class="n">spdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">scipy</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SciPy is installed in </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">spdir</span><span class="p">)</span>
+
+        <span class="n">pyversion</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">version</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Python version </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">pyversion</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;nose version </span><span class="si">%d</span><span class="s2">.</span><span class="si">%d</span><span class="s2">.</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">nose</span><span class="o">.</span><span class="n">__versioninfo__</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_custom_doctester</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return instantiated plugin for doctests</span>
+
+<span class="sd">        Allows subclassing of this class to override doctester</span>
+
+<span class="sd">        A return value of None means use the nose builtin doctest plugin</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">.noseclasses</span> <span class="k">import</span> <span class="n">NumpyDoctest</span>
+        <span class="k">return</span> <span class="n">NumpyDoctest</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">prepare_test_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;fast&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">extra_argv</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">doctests</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">coverage</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">timer</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run tests for module using nose.</span>
+
+<span class="sd">        This method does the heavy lifting for the `test` method. It takes all</span>
+<span class="sd">        the same arguments, for details see `test`.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        test</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># fail with nice error message if nose is not present</span>
+        <span class="n">import_nose</span><span class="p">()</span>
+        <span class="c1"># compile argv</span>
+        <span class="n">argv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_test_argv</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">extra_argv</span><span class="p">)</span>
+        <span class="c1"># our way of doing coverage</span>
+        <span class="k">if</span> <span class="n">coverage</span><span class="p">:</span>
+            <span class="n">argv</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;--cover-package=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">package_name</span><span class="p">,</span> <span class="s1">&#39;--with-coverage&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;--cover-tests&#39;</span><span class="p">,</span> <span class="s1">&#39;--cover-erase&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">timer</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">timer</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">argv</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;--with-timer&#39;</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">timer</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">argv</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;--with-timer&#39;</span><span class="p">,</span> <span class="s1">&#39;--timer-top-n&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">timer</span><span class="p">)]</span>
+
+        <span class="c1"># construct list of plugins</span>
+        <span class="kn">import</span> <span class="nn">nose.plugins.builtin</span>
+        <span class="kn">from</span> <span class="nn">nose.plugins</span> <span class="k">import</span> <span class="n">EntryPointPluginManager</span>
+        <span class="kn">from</span> <span class="nn">.noseclasses</span> <span class="k">import</span> <span class="p">(</span><span class="n">KnownFailurePlugin</span><span class="p">,</span> <span class="n">Unplugger</span><span class="p">,</span>
+                                  <span class="n">FPUModeCheckPlugin</span><span class="p">)</span>
+        <span class="n">plugins</span> <span class="o">=</span> <span class="p">[</span><span class="n">KnownFailurePlugin</span><span class="p">()]</span>
+        <span class="n">plugins</span> <span class="o">+=</span> <span class="p">[</span><span class="n">p</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">nose</span><span class="o">.</span><span class="n">plugins</span><span class="o">.</span><span class="n">builtin</span><span class="o">.</span><span class="n">plugins</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_fpu_mode</span><span class="p">:</span>
+            <span class="n">plugins</span> <span class="o">+=</span> <span class="p">[</span><span class="n">FPUModeCheckPlugin</span><span class="p">()]</span>
+            <span class="n">argv</span> <span class="o">+=</span> <span class="p">[</span><span class="s2">&quot;--with-fpumodecheckplugin&quot;</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># External plugins (like nose-timer)</span>
+            <span class="n">entrypoint_manager</span> <span class="o">=</span> <span class="n">EntryPointPluginManager</span><span class="p">()</span>
+            <span class="n">entrypoint_manager</span><span class="o">.</span><span class="n">loadPlugins</span><span class="p">()</span>
+            <span class="n">plugins</span> <span class="o">+=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">entrypoint_manager</span><span class="o">.</span><span class="n">plugins</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="c1"># Relies on pkg_resources, not a hard dependency</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># add doctesting if required</span>
+        <span class="n">doctest_argv</span> <span class="o">=</span> <span class="s1">&#39;--with-doctest&#39;</span> <span class="ow">in</span> <span class="n">argv</span>
+        <span class="k">if</span> <span class="n">doctests</span> <span class="o">==</span> <span class="kc">False</span> <span class="ow">and</span> <span class="n">doctest_argv</span><span class="p">:</span>
+            <span class="n">doctests</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">plug</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_custom_doctester</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">plug</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># use standard doctesting</span>
+            <span class="k">if</span> <span class="n">doctests</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">doctest_argv</span><span class="p">:</span>
+                <span class="n">argv</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;--with-doctest&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># custom doctesting</span>
+            <span class="k">if</span> <span class="n">doctest_argv</span><span class="p">:</span>  <span class="c1"># in fact the unplugger would take care of this</span>
+                <span class="n">argv</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;--with-doctest&#39;</span><span class="p">)</span>
+            <span class="n">plugins</span> <span class="o">+=</span> <span class="p">[</span><span class="n">Unplugger</span><span class="p">(</span><span class="s1">&#39;doctest&#39;</span><span class="p">),</span> <span class="n">plug</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">doctests</span><span class="p">:</span>
+                <span class="n">argv</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;--with-&#39;</span> <span class="o">+</span> <span class="n">plug</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">argv</span><span class="p">,</span> <span class="n">plugins</span>
+
+    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;fast&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">extra_argv</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">doctests</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">coverage</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">raise_warnings</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">timer</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run tests for module using nose.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        label : {&#39;fast&#39;, &#39;full&#39;, &#39;&#39;, attribute identifier}, optional</span>
+<span class="sd">            Identifies the tests to run. This can be a string to pass to</span>
+<span class="sd">            the nosetests executable with the &#39;-A&#39; option, or one of several</span>
+<span class="sd">            special values.  Special values are:</span>
+<span class="sd">            * &#39;fast&#39; - the default - which corresponds to the ``nosetests -A``</span>
+<span class="sd">              option of &#39;not slow&#39;.</span>
+<span class="sd">            * &#39;full&#39; - fast (as above) and slow tests as in the</span>
+<span class="sd">              &#39;no -A&#39; option to nosetests - this is the same as &#39;&#39;.</span>
+<span class="sd">            * None or &#39;&#39; - run all tests.</span>
+<span class="sd">            attribute_identifier - string passed directly to nosetests as &#39;-A&#39;.</span>
+<span class="sd">        verbose : int, optional</span>
+<span class="sd">            Verbosity value for test outputs, in the range 1-10. Default is 1.</span>
+<span class="sd">        extra_argv : list, optional</span>
+<span class="sd">            List with any extra arguments to pass to nosetests.</span>
+<span class="sd">        doctests : bool, optional</span>
+<span class="sd">            If True, run doctests in module. Default is False.</span>
+<span class="sd">        coverage : bool, optional</span>
+<span class="sd">            If True, report coverage of NumPy code. Default is False.</span>
+<span class="sd">            (This requires the `coverage module:</span>
+<span class="sd">             &lt;http://nedbatchelder.com/code/modules/coverage.html&gt;`_).</span>
+<span class="sd">        raise_warnings : None, str or sequence of warnings, optional</span>
+<span class="sd">            This specifies which warnings to configure as &#39;raise&#39; instead</span>
+<span class="sd">            of being shown once during the test execution.  Valid strings are:</span>
+
+<span class="sd">              - &quot;develop&quot; : equals ``(Warning,)``</span>
+<span class="sd">              - &quot;release&quot; : equals ``()``, don&#39;t raise on any warnings.</span>
+
+<span class="sd">            The default is to use the class initialization value.</span>
+<span class="sd">        timer : bool or int, optional</span>
+<span class="sd">            Timing of individual tests with ``nose-timer`` (which needs to be</span>
+<span class="sd">            installed).  If True, time tests and report on all of them.</span>
+<span class="sd">            If an integer (say ``N``), report timing results for ``N`` slowest</span>
+<span class="sd">            tests.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        result : object</span>
+<span class="sd">            Returns the result of running the tests as a</span>
+<span class="sd">            ``nose.result.TextTestResult`` object.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Each NumPy module exposes `test` in its namespace to run all tests for it.</span>
+<span class="sd">        For example, to run all tests for numpy.lib:</span>
+
+<span class="sd">        &gt;&gt;&gt; np.lib.test() #doctest: +SKIP</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; result = np.lib.test() #doctest: +SKIP</span>
+<span class="sd">        Running unit tests for numpy.lib</span>
+<span class="sd">        ...</span>
+<span class="sd">        Ran 976 tests in 3.933s</span>
+
+<span class="sd">        OK</span>
+
+<span class="sd">        &gt;&gt;&gt; result.errors #doctest: +SKIP</span>
+<span class="sd">        []</span>
+<span class="sd">        &gt;&gt;&gt; result.knownfail #doctest: +SKIP</span>
+<span class="sd">        []</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># cap verbosity at 3 because nose becomes *very* verbose beyond that</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">verbose</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">utils</span>
+        <span class="n">utils</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+
+        <span class="n">argv</span><span class="p">,</span> <span class="n">plugins</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare_test_args</span><span class="p">(</span>
+                <span class="n">label</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">extra_argv</span><span class="p">,</span> <span class="n">doctests</span><span class="p">,</span> <span class="n">coverage</span><span class="p">,</span> <span class="n">timer</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">doctests</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running unit tests and doctests for </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">package_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running unit tests for </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">package_name</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_show_system_info</span><span class="p">()</span>
+
+        <span class="c1"># reset doctest state on every run</span>
+        <span class="kn">import</span> <span class="nn">doctest</span>
+        <span class="n">doctest</span><span class="o">.</span><span class="n">master</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">raise_warnings</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">raise_warnings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">raise_warnings</span>
+
+        <span class="n">_warn_opts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">develop</span><span class="o">=</span><span class="p">(</span><span class="ne">Warning</span><span class="p">,),</span>
+                          <span class="n">release</span><span class="o">=</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raise_warnings</span><span class="p">,</span> <span class="n">basestring</span><span class="p">):</span>
+            <span class="n">raise_warnings</span> <span class="o">=</span> <span class="n">_warn_opts</span><span class="p">[</span><span class="n">raise_warnings</span><span class="p">]</span>
+
+        <span class="k">with</span> <span class="n">suppress_warnings</span><span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sup</span><span class="p">:</span>
+            <span class="c1"># Reset the warning filters to the default state,</span>
+            <span class="c1"># so that running the tests is more repeatable.</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">resetwarnings</span><span class="p">()</span>
+            <span class="c1"># Set all warnings to &#39;warn&#39;, this is because the default &#39;once&#39;</span>
+            <span class="c1"># has the bad property of possibly shadowing later warnings.</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;always&#39;</span><span class="p">)</span>
+            <span class="c1"># Force the requested warnings to raise</span>
+            <span class="k">for</span> <span class="n">warningtype</span> <span class="ow">in</span> <span class="n">raise_warnings</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;error&#39;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="n">warningtype</span><span class="p">)</span>
+            <span class="c1"># Filter out annoying import messages.</span>
+            <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s1">&#39;Not importing directory&#39;</span><span class="p">)</span>
+            <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;numpy.dtype size changed&quot;</span><span class="p">)</span>
+            <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;numpy.ufunc size changed&quot;</span><span class="p">)</span>
+            <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ModuleDeprecationWarning</span><span class="p">)</span>
+            <span class="c1"># Filter out boolean &#39;-&#39; deprecation messages. This allows</span>
+            <span class="c1"># older versions of scipy to test without a flood of messages.</span>
+            <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;.*boolean negative.*&quot;</span><span class="p">)</span>
+            <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;.*boolean subtract.*&quot;</span><span class="p">)</span>
+            <span class="c1"># Filter out distutils cpu warnings (could be localized to</span>
+            <span class="c1"># distutils tests). ASV has problems with top level import,</span>
+            <span class="c1"># so fetch module for suppression here.</span>
+            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;always&quot;</span><span class="p">)</span>
+                <span class="kn">from</span> <span class="nn">...distutils</span> <span class="k">import</span> <span class="n">cpuinfo</span>
+            <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="ne">UserWarning</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="n">cpuinfo</span><span class="p">)</span>
+            <span class="c1"># See #7949: Filter out deprecation warnings due to the -3 flag to</span>
+            <span class="c1"># python 2</span>
+            <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">sys</span><span class="o">.</span><span class="n">py3kwarning</span><span class="p">:</span>
+                <span class="c1"># This is very specific, so using the fragile module filter</span>
+                <span class="c1"># is fine</span>
+                <span class="kn">import</span> <span class="nn">threading</span>
+                <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="ne">DeprecationWarning</span><span class="p">,</span>
+                           <span class="sa">r</span><span class="s2">&quot;sys\.exc_clear\(\) not supported in 3\.x&quot;</span><span class="p">,</span>
+                           <span class="n">module</span><span class="o">=</span><span class="n">threading</span><span class="p">)</span>
+                <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;in 3\.x, __setslice__&quot;</span><span class="p">)</span>
+                <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;in 3\.x, __getslice__&quot;</span><span class="p">)</span>
+                <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;buffer\(\) not supported in 3\.x&quot;</span><span class="p">)</span>
+                <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;CObject type is not supported in 3\.x&quot;</span><span class="p">)</span>
+                <span class="n">sup</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;comparing unequal types not supported in 3\.x&quot;</span><span class="p">)</span>
+            <span class="c1"># Filter out some deprecation warnings inside nose 1.3.7 when run</span>
+            <span class="c1"># on python 3.5b2. See</span>
+            <span class="c1">#     https://github.com/nose-devs/nose/issues/929</span>
+            <span class="c1"># Note: it is hard to filter based on module for sup (lineno could</span>
+            <span class="c1">#       be implemented).</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;.*getargspec.*&quot;</span><span class="p">,</span>
+                                    <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">,</span>
+                                    <span class="n">module</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;nose\.&quot;</span><span class="p">)</span>
+
+            <span class="kn">from</span> <span class="nn">.noseclasses</span> <span class="k">import</span> <span class="n">NumpyTestProgram</span>
+
+            <span class="n">t</span> <span class="o">=</span> <span class="n">NumpyTestProgram</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="n">argv</span><span class="p">,</span> <span class="n">exit</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plugins</span><span class="o">=</span><span class="n">plugins</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">t</span><span class="o">.</span><span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">bench</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;fast&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">extra_argv</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run benchmarks for module using nose.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        label : {&#39;fast&#39;, &#39;full&#39;, &#39;&#39;, attribute identifier}, optional</span>
+<span class="sd">            Identifies the benchmarks to run. This can be a string to pass to</span>
+<span class="sd">            the nosetests executable with the &#39;-A&#39; option, or one of several</span>
+<span class="sd">            special values.  Special values are:</span>
+<span class="sd">            * &#39;fast&#39; - the default - which corresponds to the ``nosetests -A``</span>
+<span class="sd">              option of &#39;not slow&#39;.</span>
+<span class="sd">            * &#39;full&#39; - fast (as above) and slow benchmarks as in the</span>
+<span class="sd">              &#39;no -A&#39; option to nosetests - this is the same as &#39;&#39;.</span>
+<span class="sd">            * None or &#39;&#39; - run all tests.</span>
+<span class="sd">            attribute_identifier - string passed directly to nosetests as &#39;-A&#39;.</span>
+<span class="sd">        verbose : int, optional</span>
+<span class="sd">            Verbosity value for benchmark outputs, in the range 1-10. Default is 1.</span>
+<span class="sd">        extra_argv : list, optional</span>
+<span class="sd">            List with any extra arguments to pass to nosetests.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        success : bool</span>
+<span class="sd">            Returns True if running the benchmarks works, False if an error</span>
+<span class="sd">            occurred.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Benchmarks are like tests, but have names starting with &quot;bench&quot; instead</span>
+<span class="sd">        of &quot;test&quot;, and can be found under the &quot;benchmarks&quot; sub-directory of the</span>
+<span class="sd">        module.</span>
+
+<span class="sd">        Each NumPy module exposes `bench` in its namespace to run all benchmarks</span>
+<span class="sd">        for it.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; success = np.lib.bench() #doctest: +SKIP</span>
+<span class="sd">        Running benchmarks for numpy.lib</span>
+<span class="sd">        ...</span>
+<span class="sd">        using 562341 items:</span>
+<span class="sd">        unique:</span>
+<span class="sd">        0.11</span>
+<span class="sd">        unique1d:</span>
+<span class="sd">        0.11</span>
+<span class="sd">        ratio: 1.0</span>
+<span class="sd">        nUnique: 56230 == 56230</span>
+<span class="sd">        ...</span>
+<span class="sd">        OK</span>
+
+<span class="sd">        &gt;&gt;&gt; success #doctest: +SKIP</span>
+<span class="sd">        True</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Running benchmarks for </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">package_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_show_system_info</span><span class="p">()</span>
+
+        <span class="n">argv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_test_argv</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">extra_argv</span><span class="p">)</span>
+        <span class="n">argv</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;--match&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;(?:^|[</span><span class="se">\\</span><span class="s1">b_</span><span class="se">\\</span><span class="s1">.</span><span class="si">%s</span><span class="s1">-])[Bb]ench&#39;</span> <span class="o">%</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">]</span>
+
+        <span class="c1"># import nose or make informative error</span>
+        <span class="n">nose</span> <span class="o">=</span> <span class="n">import_nose</span><span class="p">()</span>
+
+        <span class="c1"># get plugin to disable doctests</span>
+        <span class="kn">from</span> <span class="nn">.noseclasses</span> <span class="k">import</span> <span class="n">Unplugger</span>
+        <span class="n">add_plugins</span> <span class="o">=</span> <span class="p">[</span><span class="n">Unplugger</span><span class="p">(</span><span class="s1">&#39;doctest&#39;</span><span class="p">)]</span>
+
+        <span class="k">return</span> <span class="n">nose</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">argv</span><span class="o">=</span><span class="n">argv</span><span class="p">,</span> <span class="n">addplugins</span><span class="o">=</span><span class="n">add_plugins</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_numpy_tester</span><span class="p">():</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">np</span><span class="p">,</span> <span class="s2">&quot;__version__&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;.dev0&quot;</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">__version__</span><span class="p">:</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;develop&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;release&quot;</span>
+    <span class="k">return</span> <span class="n">NoseTester</span><span class="p">(</span><span class="n">raise_warnings</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                      <span class="n">check_fpu_mode</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">PFFT-Python 0.1.20 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2015, Yu Feng.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.5.
+    </div>
+  </body>
+</html>

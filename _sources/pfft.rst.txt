@@ -21,5 +21,6 @@ Module contents
 
 .. automodule:: pfft
     :members:
+    :imported-members:
     :undoc-members:
     :show-inheritance:

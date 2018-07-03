@@ -100,6 +100,577 @@
 </div>
 <div class="section" id="module-pfft">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pfft" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pfft.Direction">
+<em class="property">class </em><code class="descclassname">pfft.</code><code class="descname">Direction</code><a class="headerlink" href="#pfft.Direction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+<p>PFFT Transformation Directions</p>
+<dl class="attribute">
+<dt id="pfft.Direction.BACKWARD">
+<code class="descname">BACKWARD</code><em class="property"> = 1</em><a class="headerlink" href="#pfft.Direction.BACKWARD" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Direction.FORWARD">
+<code class="descname">FORWARD</code><em class="property"> = -1</em><a class="headerlink" href="#pfft.Direction.FORWARD" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Direction.PFFT_BACKWARD">
+<code class="descname">PFFT_BACKWARD</code><em class="property"> = 1</em><a class="headerlink" href="#pfft.Direction.PFFT_BACKWARD" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Direction.PFFT_FORWARD">
+<code class="descname">PFFT_FORWARD</code><em class="property"> = -1</em><a class="headerlink" href="#pfft.Direction.PFFT_FORWARD" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pfft.Flags">
+<em class="property">class </em><code class="descclassname">pfft.</code><code class="descname">Flags</code><a class="headerlink" href="#pfft.Flags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+<p>PFFT Transformation Flags</p>
+<dl class="attribute">
+<dt id="pfft.Flags.BUFFERED_INPLACE">
+<code class="descname">BUFFERED_INPLACE</code><em class="property"> = 1024</em><a class="headerlink" href="#pfft.Flags.BUFFERED_INPLACE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.DESTROY_INPUT">
+<code class="descname">DESTROY_INPUT</code><em class="property"> = 512</em><a class="headerlink" href="#pfft.Flags.DESTROY_INPUT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.ESTIMATE">
+<code class="descname">ESTIMATE</code><em class="property"> = 16</em><a class="headerlink" href="#pfft.Flags.ESTIMATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.EXHAUSTIVE">
+<code class="descname">EXHAUSTIVE</code><em class="property"> = 64</em><a class="headerlink" href="#pfft.Flags.EXHAUSTIVE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.MEASURE">
+<code class="descname">MEASURE</code><em class="property"> = 0</em><a class="headerlink" href="#pfft.Flags.MEASURE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.NO_TUNE">
+<code class="descname">NO_TUNE</code><em class="property"> = 0</em><a class="headerlink" href="#pfft.Flags.NO_TUNE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PADDED_C2R">
+<code class="descname">PADDED_C2R</code><em class="property"> = 2048</em><a class="headerlink" href="#pfft.Flags.PADDED_C2R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PADDED_R2C">
+<code class="descname">PADDED_R2C</code><em class="property"> = 2048</em><a class="headerlink" href="#pfft.Flags.PADDED_R2C" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PATIENT">
+<code class="descname">PATIENT</code><em class="property"> = 32</em><a class="headerlink" href="#pfft.Flags.PATIENT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_BUFFERED_INPLACE">
+<code class="descname">PFFT_BUFFERED_INPLACE</code><em class="property"> = 1024</em><a class="headerlink" href="#pfft.Flags.PFFT_BUFFERED_INPLACE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_DESTROY_INPUT">
+<code class="descname">PFFT_DESTROY_INPUT</code><em class="property"> = 512</em><a class="headerlink" href="#pfft.Flags.PFFT_DESTROY_INPUT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_ESTIMATE">
+<code class="descname">PFFT_ESTIMATE</code><em class="property"> = 16</em><a class="headerlink" href="#pfft.Flags.PFFT_ESTIMATE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_EXHAUSTIVE">
+<code class="descname">PFFT_EXHAUSTIVE</code><em class="property"> = 64</em><a class="headerlink" href="#pfft.Flags.PFFT_EXHAUSTIVE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_MEASURE">
+<code class="descname">PFFT_MEASURE</code><em class="property"> = 0</em><a class="headerlink" href="#pfft.Flags.PFFT_MEASURE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_NO_TUNE">
+<code class="descname">PFFT_NO_TUNE</code><em class="property"> = 0</em><a class="headerlink" href="#pfft.Flags.PFFT_NO_TUNE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_PADDED_C2R">
+<code class="descname">PFFT_PADDED_C2R</code><em class="property"> = 2048</em><a class="headerlink" href="#pfft.Flags.PFFT_PADDED_C2R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_PADDED_R2C">
+<code class="descname">PFFT_PADDED_R2C</code><em class="property"> = 2048</em><a class="headerlink" href="#pfft.Flags.PFFT_PADDED_R2C" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_PATIENT">
+<code class="descname">PFFT_PATIENT</code><em class="property"> = 32</em><a class="headerlink" href="#pfft.Flags.PFFT_PATIENT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_PRESERVE_INPUT">
+<code class="descname">PFFT_PRESERVE_INPUT</code><em class="property"> = 256</em><a class="headerlink" href="#pfft.Flags.PFFT_PRESERVE_INPUT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_SHIFTED_IN">
+<code class="descname">PFFT_SHIFTED_IN</code><em class="property"> = 4</em><a class="headerlink" href="#pfft.Flags.PFFT_SHIFTED_IN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_SHIFTED_NONE">
+<code class="descname">PFFT_SHIFTED_NONE</code><em class="property"> = 0</em><a class="headerlink" href="#pfft.Flags.PFFT_SHIFTED_NONE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_SHIFTED_OUT">
+<code class="descname">PFFT_SHIFTED_OUT</code><em class="property"> = 8</em><a class="headerlink" href="#pfft.Flags.PFFT_SHIFTED_OUT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_TRANSPOSED_IN">
+<code class="descname">PFFT_TRANSPOSED_IN</code><em class="property"> = 1</em><a class="headerlink" href="#pfft.Flags.PFFT_TRANSPOSED_IN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_TRANSPOSED_NONE">
+<code class="descname">PFFT_TRANSPOSED_NONE</code><em class="property"> = 0</em><a class="headerlink" href="#pfft.Flags.PFFT_TRANSPOSED_NONE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_TRANSPOSED_OUT">
+<code class="descname">PFFT_TRANSPOSED_OUT</code><em class="property"> = 2</em><a class="headerlink" href="#pfft.Flags.PFFT_TRANSPOSED_OUT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PFFT_TUNE">
+<code class="descname">PFFT_TUNE</code><em class="property"> = 128</em><a class="headerlink" href="#pfft.Flags.PFFT_TUNE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.PRESERVE_INPUT">
+<code class="descname">PRESERVE_INPUT</code><em class="property"> = 256</em><a class="headerlink" href="#pfft.Flags.PRESERVE_INPUT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.SHIFTED_IN">
+<code class="descname">SHIFTED_IN</code><em class="property"> = 4</em><a class="headerlink" href="#pfft.Flags.SHIFTED_IN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.SHIFTED_NONE">
+<code class="descname">SHIFTED_NONE</code><em class="property"> = 0</em><a class="headerlink" href="#pfft.Flags.SHIFTED_NONE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.SHIFTED_OUT">
+<code class="descname">SHIFTED_OUT</code><em class="property"> = 8</em><a class="headerlink" href="#pfft.Flags.SHIFTED_OUT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.TRANSPOSED_IN">
+<code class="descname">TRANSPOSED_IN</code><em class="property"> = 1</em><a class="headerlink" href="#pfft.Flags.TRANSPOSED_IN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.TRANSPOSED_NONE">
+<code class="descname">TRANSPOSED_NONE</code><em class="property"> = 0</em><a class="headerlink" href="#pfft.Flags.TRANSPOSED_NONE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.TRANSPOSED_OUT">
+<code class="descname">TRANSPOSED_OUT</code><em class="property"> = 2</em><a class="headerlink" href="#pfft.Flags.TRANSPOSED_OUT" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.TUNE">
+<code class="descname">TUNE</code><em class="property"> = 128</em><a class="headerlink" href="#pfft.Flags.TUNE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Flags.format">
+<code class="descname">format</code><span class="sig-paren">(</span><em>self</em>, <em>flags=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.Flags.format" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pfft.LocalBuffer">
+<em class="property">class </em><code class="descclassname">pfft.</code><code class="descname">LocalBuffer</code><span class="sig-paren">(</span><em>partition</em>, <em>LocalBuffer base=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.LocalBuffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="pfft.LocalBuffer.address">
+<code class="descname">address</code><a class="headerlink" href="#pfft.LocalBuffer.address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.LocalBuffer.base">
+<code class="descname">base</code><a class="headerlink" href="#pfft.LocalBuffer.base" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.LocalBuffer.partition">
+<code class="descname">partition</code><a class="headerlink" href="#pfft.LocalBuffer.partition" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pfft.LocalBuffer.view_input">
+<code class="descname">view_input</code><span class="sig-paren">(</span><em>self</em>, <em>type=numpy.ndarray</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.LocalBuffer.view_input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pfft.LocalBuffer.view_output">
+<code class="descname">view_output</code><span class="sig-paren">(</span><em>self</em>, <em>type=numpy.ndarray</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.LocalBuffer.view_output" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pfft.LocalBuffer.view_raw">
+<code class="descname">view_raw</code><span class="sig-paren">(</span><em>self</em>, <em>type=numpy.ndarray</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.LocalBuffer.view_raw" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pfft.Partition">
+<em class="property">class </em><code class="descclassname">pfft.</code><code class="descname">Partition</code><span class="sig-paren">(</span><em>type</em>, <em>n</em>, <em>ProcMesh procmesh</em>, <em>flags</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.Partition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="pfft.Partition.alloc_local">
+<code class="descname">alloc_local</code><a class="headerlink" href="#pfft.Partition.alloc_local" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.flags">
+<code class="descname">flags</code><a class="headerlink" href="#pfft.Partition.flags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.i_dtype">
+<code class="descname">i_dtype</code><a class="headerlink" href="#pfft.Partition.i_dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.i_dtypes">
+<code class="descname">i_dtypes</code><em class="property"> = ['complex128', 'float64', 'complex128', 'float64', 'complex64', 'float32', 'complex64', 'float32']</em><a class="headerlink" href="#pfft.Partition.i_dtypes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.i_edges">
+<code class="descname">i_edges</code><a class="headerlink" href="#pfft.Partition.i_edges" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.local_i_shape">
+<code class="descname">local_i_shape</code><a class="headerlink" href="#pfft.Partition.local_i_shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.local_i_slice">
+<code class="descname">local_i_slice</code><a class="headerlink" href="#pfft.Partition.local_i_slice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.local_i_start">
+<code class="descname">local_i_start</code><a class="headerlink" href="#pfft.Partition.local_i_start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.local_i_strides">
+<code class="descname">local_i_strides</code><a class="headerlink" href="#pfft.Partition.local_i_strides" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.local_ni">
+<code class="descname">local_ni</code><a class="headerlink" href="#pfft.Partition.local_ni" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.local_no">
+<code class="descname">local_no</code><a class="headerlink" href="#pfft.Partition.local_no" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.local_o_shape">
+<code class="descname">local_o_shape</code><a class="headerlink" href="#pfft.Partition.local_o_shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.local_o_slice">
+<code class="descname">local_o_slice</code><a class="headerlink" href="#pfft.Partition.local_o_slice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.local_o_start">
+<code class="descname">local_o_start</code><a class="headerlink" href="#pfft.Partition.local_o_start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.local_o_strides">
+<code class="descname">local_o_strides</code><a class="headerlink" href="#pfft.Partition.local_o_strides" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.n">
+<code class="descname">n</code><a class="headerlink" href="#pfft.Partition.n" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.ndim">
+<code class="descname">ndim</code><a class="headerlink" href="#pfft.Partition.ndim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.ni">
+<code class="descname">ni</code><a class="headerlink" href="#pfft.Partition.ni" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.no">
+<code class="descname">no</code><a class="headerlink" href="#pfft.Partition.no" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.o_dtype">
+<code class="descname">o_dtype</code><a class="headerlink" href="#pfft.Partition.o_dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.o_dtypes">
+<code class="descname">o_dtypes</code><em class="property"> = ['complex128', 'complex128', 'float64', 'float64', 'complex64', 'complex64', 'float32', 'float32']</em><a class="headerlink" href="#pfft.Partition.o_dtypes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.o_edges">
+<code class="descname">o_edges</code><a class="headerlink" href="#pfft.Partition.o_edges" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.procmesh">
+<code class="descname">procmesh</code><a class="headerlink" href="#pfft.Partition.procmesh" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Partition.type">
+<code class="descname">type</code><a class="headerlink" href="#pfft.Partition.type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pfft.Plan">
+<em class="property">class </em><code class="descclassname">pfft.</code><code class="descname">Plan</code><span class="sig-paren">(</span><em>Partition partition</em>, <em>direction</em>, <em>LocalBuffer i</em>, <em>LocalBuffer o=None</em>, <em>type=None</em>, <em>flags=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.Plan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="pfft.Plan.direction">
+<code class="descname">direction</code><a class="headerlink" href="#pfft.Plan.direction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pfft.Plan.execute">
+<code class="descname">execute</code><span class="sig-paren">(</span><em>self</em>, <em>LocalBuffer i</em>, <em>LocalBuffer o=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.Plan.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>execute a plan.
+o and i must match the alignment (unchecked), 
+inplace status of the plan.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Plan.flags">
+<code class="descname">flags</code><a class="headerlink" href="#pfft.Plan.flags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Plan.inplace">
+<code class="descname">inplace</code><a class="headerlink" href="#pfft.Plan.inplace" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Plan.type">
+<code class="descname">type</code><a class="headerlink" href="#pfft.Plan.type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pfft.ProcMesh">
+<em class="property">class </em><code class="descclassname">pfft.</code><code class="descname">ProcMesh</code><span class="sig-paren">(</span><em>np</em>, <em>comm=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.ProcMesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The topology of the MPI ranks. (procmesh)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Attributes:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>comm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">MPI.Comm</span></dt>
+<dd><p class="first last">MPI communicator the proc mesh is built for.
+Note that it does not have the 2D topology.</p>
+</dd>
+<dt><strong>this</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">The rank of current process in the procmesh</p>
+</dd>
+<dt><strong>np</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array_like</span></dt>
+<dd><p class="first last">The shape of the proc mesh.</p>
+</dd>
+<dt><strong>ndim</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">size of the proc mesh</p>
+</dd>
+<dt><strong>rank</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">MPI rank</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="pfft.ProcMesh.comm">
+<code class="descname">comm</code><a class="headerlink" href="#pfft.ProcMesh.comm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.ProcMesh.ndim">
+<code class="descname">ndim</code><a class="headerlink" href="#pfft.ProcMesh.ndim" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.ProcMesh.np">
+<code class="descname">np</code><a class="headerlink" href="#pfft.ProcMesh.np" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.ProcMesh.rank">
+<code class="descname">rank</code><a class="headerlink" href="#pfft.ProcMesh.rank" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pfft.ProcMesh.split">
+<code class="descname">split</code><span class="sig-paren">(</span><em>type cls</em>, <em>ndim</em>, <em>comm=None</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.ProcMesh.split" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.ProcMesh.this">
+<code class="descname">this</code><a class="headerlink" href="#pfft.ProcMesh.this" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Tester">
+<code class="descclassname">pfft.</code><code class="descname">Tester</code><a class="headerlink" href="#pfft.Tester" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.testing.nose_tools.nosetester.NoseTester</span></code></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pfft.Type">
+<em class="property">class </em><code class="descclassname">pfft.</code><code class="descname">Type</code><a class="headerlink" href="#pfft.Type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+<p>PFFT Transformation Types 
+Double precision is prefixed with PFFT
+Single precision is prefixed with PFFTF</p>
+<dl class="attribute">
+<dt id="pfft.Type.C2C">
+<code class="descname">C2C</code><em class="property"> = 0</em><a class="headerlink" href="#pfft.Type.C2C" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.C2CF">
+<code class="descname">C2CF</code><em class="property"> = 4</em><a class="headerlink" href="#pfft.Type.C2CF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.C2R">
+<code class="descname">C2R</code><em class="property"> = 2</em><a class="headerlink" href="#pfft.Type.C2R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.C2RF">
+<code class="descname">C2RF</code><em class="property"> = 6</em><a class="headerlink" href="#pfft.Type.C2RF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.PFFTF_C2C">
+<code class="descname">PFFTF_C2C</code><em class="property"> = 4</em><a class="headerlink" href="#pfft.Type.PFFTF_C2C" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.PFFTF_C2R">
+<code class="descname">PFFTF_C2R</code><em class="property"> = 6</em><a class="headerlink" href="#pfft.Type.PFFTF_C2R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.PFFTF_R2C">
+<code class="descname">PFFTF_R2C</code><em class="property"> = 5</em><a class="headerlink" href="#pfft.Type.PFFTF_R2C" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.PFFTF_R2R">
+<code class="descname">PFFTF_R2R</code><em class="property"> = 7</em><a class="headerlink" href="#pfft.Type.PFFTF_R2R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.PFFT_C2C">
+<code class="descname">PFFT_C2C</code><em class="property"> = 0</em><a class="headerlink" href="#pfft.Type.PFFT_C2C" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.PFFT_C2R">
+<code class="descname">PFFT_C2R</code><em class="property"> = 2</em><a class="headerlink" href="#pfft.Type.PFFT_C2R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.PFFT_R2C">
+<code class="descname">PFFT_R2C</code><em class="property"> = 1</em><a class="headerlink" href="#pfft.Type.PFFT_R2C" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.PFFT_R2R">
+<code class="descname">PFFT_R2R</code><em class="property"> = 3</em><a class="headerlink" href="#pfft.Type.PFFT_R2R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.R2C">
+<code class="descname">R2C</code><em class="property"> = 1</em><a class="headerlink" href="#pfft.Type.R2C" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.R2CF">
+<code class="descname">R2CF</code><em class="property"> = 5</em><a class="headerlink" href="#pfft.Type.R2CF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.R2R">
+<code class="descname">R2R</code><em class="property"> = 3</em><a class="headerlink" href="#pfft.Type.R2R" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pfft.Type.R2RF">
+<code class="descname">R2RF</code><em class="property"> = 7</em><a class="headerlink" href="#pfft.Type.R2RF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pfft.split_size_2d">
+<code class="descclassname">pfft.</code><code class="descname">split_size_2d</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="headerlink" href="#pfft.split_size_2d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split <cite>s</cite> into two integers, 
+a and d, such that a * d == s and a &lt;= d</p>
+<p>returns:  a, d</p>
+</dd></dl>
+
 </div>
 </div>
 
