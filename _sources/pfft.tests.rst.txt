@@ -1,0 +1,17 @@
+pfft.tests package
+==================
+
+Submodules
+----------
+
+.. toctree::
+
+   pfft.tests.test_pfft
+
+Module contents
+---------------
+
+.. automodule:: pfft.tests
+    :members:
+    :undoc-members:
+    :show-inheritance:

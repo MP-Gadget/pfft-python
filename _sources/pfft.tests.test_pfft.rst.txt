@@ -1,0 +1,7 @@
+pfft.tests.test\_pfft module
+============================
+
+.. automodule:: pfft.tests.test_pfft
+    :members:
+    :undoc-members:
+    :show-inheritance:
