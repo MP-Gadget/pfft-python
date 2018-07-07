@@ -119,6 +119,24 @@ def test_correct_single(comm):
     assert_array_equal(correct, buffer2.view_output())
 
 @MPITest(1)
+def test_plan_backward(comm):
+    procmesh = pfft.ProcMesh(np=[1], comm=comm)
+
+    partition = pfft.Partition(pfft.Type.PFFT_R2C, [2, 2],
+        procmesh, flags=pfft.Flags.PFFT_ESTIMATE | pfft.Flags.PFFT_TRANSPOSED_OUT)
+
+    buffer1 = pfft.LocalBuffer(partition)
+    buffer2 = pfft.LocalBuffer(partition)
+
+    plan = pfft.Plan(partition, pfft.Direction.PFFT_FORWARD, buffer1, buffer2)
+    assert plan.flags & pfft.Flags.PFFT_TRANSPOSED_OUT
+    assert plan.type == pfft.Type.PFFT_R2C
+
+    plan = pfft.Plan(partition, pfft.Direction.PFFT_BACKWARD, buffer1, buffer2)
+    assert plan.flags & pfft.Flags.PFFT_TRANSPOSED_IN
+    assert plan.type == pfft.Type.PFFT_C2R
+
+@MPITest(1)
 def test_raw(comm):
     procmesh = pfft.ProcMesh(np=[1], comm=comm)
 

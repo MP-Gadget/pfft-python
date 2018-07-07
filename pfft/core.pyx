@@ -204,9 +204,11 @@ class Flags(int):
     BUFFERED_INPLACE = _PFFT_BUFFERED_INPLACE
     PADDED_R2C = _PFFT_PADDED_R2C
     PADDED_C2R = _PFFT_PADDED_C2R
+
     def __new__(cls, value):
         self = int.__new__(cls, value)
         return self
+
     def __repr__(self):
         d = self.__class__.__dict__
         keys = sorted([k for k in d.keys() if k.isupper() and not k.startswith('PFFT')])
@@ -235,6 +237,7 @@ class Direction(int):
     def __new__(cls, value):
         self = int.__new__(cls, value)
         return self
+
     def __repr__(self):
         d = self.__class__.__dict__
         keys = sorted([k for k in d.keys() if k.isupper() and not k.startswith('PFFT')])
@@ -269,14 +272,30 @@ class Type(int):
     def __new__(cls, value):
         self = int.__new__(cls, value)
         return self
+
     def __repr__(self):
         d = self.__class__.__dict__
         keys = sorted([k for k in d.keys() if k.isupper() and not k.startswith('PFFT')])
         return 'and'.join([k for k in keys if (d[k] == self)])
 
+    def is_inverse_of(self, other):
+        return self == other.inverse
+
+    @property
+    def inverse(self):
+        inverses = { Type.C2C : Type.C2C,
+                     Type.R2C : Type.C2R,
+                     Type.C2R : Type.R2C,
+                     Type.C2CF : Type.C2CF,
+                     Type.R2CF : Type.C2RF,
+                     Type.C2RF : Type.R2CF,
+                    }
+        return inverses[self]
+
 ctypedef numpy.intp_t (*pfft_local_size_func)(int rnk_n, numpy.intp_t * n, cMPI.MPI_Comm comm, int
             pfft_flags, numpy.intp_t * local_ni, numpy.intp_t * local_i_start,
             numpy.intp_t* local_no, numpy.intp_t * local_o_start)
+
 cdef pfft_local_size_func PFFT_LOCAL_SIZE_FUNC [8]
 
 PFFT_LOCAL_SIZE_FUNC[:] = [
@@ -820,17 +839,32 @@ cdef class Plan(object):
                 plan = Plan(partition, Direction.PFFT_FORWARD, buf1, buf2)
 
         """
+        self.direction = Direction(direction)
+
         if type is None:
-            type = partition.type
+            if self.direction == Direction.BACKWARD:
+                type = partition.type.inverse
+            else:
+                type = partition.type
+
+        self.type = Type(type)
 
         n = partition.n
         cdef ProcMesh procmesh = partition.procmesh
+
         if flags is None:
             flags = partition.flags
 
+            if self.type.is_inverse_of(partition.type):
+                if partition.flags & Flags.PFFT_TRANSPOSED_IN:
+                    flags = flags & ~Flags.PFFT_TRANSPOSED_IN
+                    flags |= Flags.PFFT_TRANSPOSED_OUT
+
+                if partition.flags & Flags.PFFT_TRANSPOSED_OUT:
+                    flags = flags & ~Flags.PFFT_TRANSPOSED_OUT
+                    flags |= Flags.PFFT_TRANSPOSED_IN
+
         self.flags = Flags(flags)
-        self.type = Type(type)
-        self.direction = Direction(direction)
 
         cdef pfft_plan_func func = PFFT_PLAN_FUNC[self.type]
         cdef numpy.intp_t [::1] n_ = numpy.array(n, dtype='intp')
