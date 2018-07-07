@@ -855,7 +855,7 @@ cdef class Plan(object):
         if flags is None:
             flags = partition.flags
 
-            if self.type.is_inverse_of(partition.type):
+            if self.type.is_inverse_of(partition.type) and self.direction == Direction.BACKWARD:
                 if partition.flags & Flags.PFFT_TRANSPOSED_IN:
                     flags = flags & ~Flags.PFFT_TRANSPOSED_IN
                     flags |= Flags.PFFT_TRANSPOSED_OUT
