@@ -325,17 +325,17 @@ ctypedef pfft_plan (*pfft_plan_func_r2r) (
             cMPI.MPI_Comm ccart,
             int * kinds, unsigned pfft_flags)
 
-cdef pfft_plan_func PFFT_PLAN_FUNC [8]
+cdef void * PFFT_PLAN_FUNC [8]
 
 PFFT_PLAN_FUNC[:] = [
-    <pfft_plan_func> pfft_plan_dft,
-    <pfft_plan_func> pfft_plan_dft_r2c,
-    <pfft_plan_func> pfft_plan_dft_c2r,
-    <pfft_plan_func> pfft_plan_r2r,
-    <pfft_plan_func> pfftf_plan_dft,
-    <pfft_plan_func> pfftf_plan_dft_r2c,
-    <pfft_plan_func> pfftf_plan_dft_c2r,
-    <pfft_plan_func> pfftf_plan_r2r,
+    <void*> pfft_plan_dft,
+    <void*> pfft_plan_dft_r2c,
+    <void*> pfft_plan_dft_c2r,
+    <void*> pfft_plan_r2r,
+    <void*> pfftf_plan_dft,
+    <void*> pfftf_plan_dft_r2c,
+    <void*> pfftf_plan_dft_c2r,
+    <void*> pfftf_plan_r2r,
         ]
 
 ctypedef void (*pfft_free_plan_func) (void * plan)
