@@ -4,10 +4,10 @@
 language: python
 python:
     - 2.7
-    - 3.5
+    - 3.7
 
 env:
-    - NUMPY_VERSION=1.11.1
+    - NUMPY_VERSION=1.15
 
 cache:
     directories:
