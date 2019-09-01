@@ -1,4 +1,5 @@
 #cython: embedsignature=True
+#cython: boundscheck=False
 """
     pfft-python: python binding of PFFT.
 
@@ -416,7 +417,7 @@ cdef class ProcMesh(object):
                 procmesh = ProcMesh([2, 3]) # creates a 2 x 3 mesh.
 
             product(np) must equal to comm.size
-            
+
             if the mpi4py version is recent (cMPI._addressof), comm can
             be any mpi4py Comm objects.
         """

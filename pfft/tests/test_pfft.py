@@ -310,3 +310,35 @@ def test_2d_on_2d_r2c(comm):
     result[partition.local_o_slice] = buffer2.view_output()
     result = comm.allreduce(result)
     assert_almost_equal(correct, result)
+
+@MPITest(1)
+def test_1d(comm):
+    procmesh = pfft.ProcMesh(np=[], comm=comm)
+
+    N = (16)
+
+    data = numpy.arange(numpy.prod(N), dtype='f8').reshape(N)
+
+    correct = numpy.fft.rfftn(data.copy())
+    result = numpy.zeros_like(correct)
+
+    partition = pfft.Partition(pfft.Type.PFFT_R2C,
+            [16], procmesh,
+            pfft.Flags.PFFT_TRANSPOSED_OUT |
+            pfft.Flags.PFFT_PADDED_R2C
+    )
+
+    assert_array_equal(partition.i_edges[0], [0, 16])
+
+    # 1d-transforms are not supported by pfft.
+    #buffer1 = pfft.LocalBuffer(partition)
+    #buffer2 = pfft.LocalBuffer(partition)
+
+    #buffer1.view_input()[:] = data[partition.local_i_slice]
+
+    #plan = pfft.Plan(partition, pfft.Direction.PFFT_FORWARD, buffer1, buffer2)
+    #plan.execute(buffer1, buffer2)
+
+    #result[partition.local_o_slice] = buffer2.view_output()
+    #result = comm.allreduce(result)
+    #assert_almost_equal(correct, result)
