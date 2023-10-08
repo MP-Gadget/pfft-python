@@ -12,7 +12,9 @@ import mpi4py
 package_basedir = os.path.abspath(os.path.dirname(__file__))
 
 def build_pfft(prefix, compiler, cflags):
-    optimize="--enable-sse2"
+    # Avoid enabling SSE2 by default. aarch64 doesn't have it.
+    # optimize="--enable-sse2"
+    optimize=""
     line = ('CFLAGS="%s -fvisibility=hidden" ' % cflags+
             'MPICC="%s" ' % compiler +
             'CC="%s" ' % compiler +
