@@ -11,11 +11,6 @@ from mpi4py import MPI
 def test_world():
     world = MPI.COMM_WORLD
 
-    procmesh = pfft.ProcMesh(np=[world.size,], comm=world)
-    assert procmesh.comm == world
-    procmesh = pfft.ProcMesh(np=[world.size,], comm=None)
-    assert procmesh.comm == world
-
     assert_array_equal(pfft.ProcMesh.split(2, None), pfft.ProcMesh.split(2, world))
     assert_array_equal(pfft.ProcMesh.split(1, None), pfft.ProcMesh.split(1, world))
 

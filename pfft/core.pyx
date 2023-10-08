@@ -438,16 +438,17 @@ cdef class ProcMesh(object):
                 else:
                     raise ValueError("only comm=MPI.COMM_WORLD is supported, "
                             + " update mpi4py to 2.0, with MPI._addressof")
-        self.comm = comm
-
-        self.rank = comm.rank
-
         cdef int [::1] np_ = numpy.array(np, 'int32')
         rt = pfft_create_procmesh(np_.shape[0], ccomm, &np_[0], &self.ccart)
 
         if rt != 0:
             self.ccart = NULL
             raise RuntimeError("Failed to create proc mesh")
+        pycomm = comm.Create_cart(dims=np_,
+                                      periods=[True] * len(np_),
+                                      reorder=1)
+        self.comm = pycomm
+        self.rank = pycomm.rank
 
         self.np = numpy.array(np_)
         self.ndim = len(self.np)
