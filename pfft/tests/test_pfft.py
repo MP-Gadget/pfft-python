@@ -245,6 +245,20 @@ def test_leak(comm):
         #FIXME: check with @mpip if this is correct.
         i = buffer.view_input()
 
+@MPITest([1, 4])
+def test_no_segfault_r2r(comm):
+    procmesh = pfft.ProcMesh(np=[comm.size], comm=comm)
+
+    partition = pfft.Partition(pfft.Type.PFFT_R2R, [32, 32],
+        procmesh, flags=pfft.Flags.PFFT_ESTIMATE)
+
+    buffer1 = pfft.LocalBuffer(partition)
+    buffer2 = pfft.LocalBuffer(partition)
+
+    plan = pfft.Plan(partition, pfft.Direction.PFFT_FORWARD, buffer1, buffer2)
+    plan.execute(buffer1, buffer2)
+
+
 @MPITest([4])
 def test_2d_on_2d_c2c(comm):
     procmesh = pfft.ProcMesh(np=[2, 2], comm=comm)
