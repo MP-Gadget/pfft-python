@@ -101,10 +101,13 @@ setup(
                 ["pfft/core.pyx"],
                 include_dirs=["./",
                 numpy.get_include(),
+                mpi4py.get_include(),
                 ],
                 libraries=['m'],
                 cython_directives = {"embedsignature": True}
-                )]),
+                )],
+                include_path=[os.path.join(mpi4py.get_include(),"../"),],
+                ),
     license='GPL3',
     scripts=['scripts/pfft-roundtrip-matrix.py'],
     cmdclass = {
