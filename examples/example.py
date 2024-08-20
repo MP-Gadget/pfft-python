@@ -14,9 +14,9 @@ Consequently, calls to plan.execute we also provide only a single buffer object.
 
 procmesh = pfft.ProcMesh([4], comm=MPI.COMM_WORLD)
 partition = pfft.Partition(
-        pfft.Type.PFFT_C2C, 
-        [8, 8], 
-        procmesh, 
+        pfft.Type.PFFT_C2C,
+        [8, 8],
+        procmesh,
         pfft.Flags.PFFT_TRANSPOSED_OUT | pfft.Flags.PFFT_DESTROY_INPUT
         )
 for irank  in range(4):
@@ -32,7 +32,7 @@ for irank  in range(4):
 buffer = pfft.LocalBuffer(partition)
 
 plan = pfft.Plan(partition, pfft.Direction.PFFT_FORWARD, buffer)
-iplan = pfft.Plan(partition, pfft.Direction.PFFT_BACKWARD, buffer, 
+iplan = pfft.Plan(partition, pfft.Direction.PFFT_BACKWARD, buffer,
         flags=pfft.Flags.PFFT_TRANSPOSED_OUT | pfft.Flags.PFFT_DESTROY_INPUT,
         )
 
@@ -50,8 +50,8 @@ plan.execute(buffer)
 
 output = buffer.view_output()
 
-# denormalize the forward transform 
-output /= numpy.product(partition.n)
+# denormalize the forward transform
+output /= numpy.prod(partition.n)
 
 iplan.execute(buffer)
 

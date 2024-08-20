@@ -5,10 +5,10 @@
    given by -Nmesh. Default is [29, 30, 31].
    Tested features are:
        regular transform (r2c + c2r, c2c)
-       transposed in / out, 
-       padded in / out, 
+       transposed in / out,
+       padded in / out,
        destroy input,
-       inplace transform 
+       inplace transform
 
    Examples:
 
@@ -18,7 +18,7 @@
    * for single-rank numpy agreement test, run with
        mpirun -np 1 python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 -verbose
 
-   * for multi-rank tests, run with 
+   * for multi-rank tests, run with
        mpirun -np 4 python roundtrip.py -Nmesh 32 32 32 -Nmesh 3 3 3 --verbose
 
    n can be any number. procmeshes tested are:
@@ -35,9 +35,9 @@ import argparse
 
 import os.path
 
-parser = argparse.ArgumentParser(description='Roundtrip testing of pfft', 
+parser = argparse.ArgumentParser(description='Roundtrip testing of pfft',
         epilog=__doc__,
-       formatter_class=argparse.RawDescriptionHelpFormatter 
+       formatter_class=argparse.RawDescriptionHelpFormatter
         )
 
 from pfft import *
@@ -85,7 +85,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     else:
         buf2 = LocalBuffer(partition)
 
-    input = buf1.view_input() 
+    input = buf1.view_input()
     output = buf2.view_output()
 
     assert input.base == buf1
@@ -95,7 +95,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
 #    print 'input', input.shape
     forward = Plan(
             partition,
-            Direction.PFFT_FORWARD, 
+            Direction.PFFT_FORWARD,
             buf1,
             buf2,
             type=type,
@@ -135,10 +135,10 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
 
     backward = Plan(
             partition,
-            Direction.PFFT_BACKWARD, 
+            Direction.PFFT_BACKWARD,
             buf2,
             buf1,
-            type=btype, 
+            type=btype,
             flags=bflags,
             )
     #print(repr(backward))
@@ -183,7 +183,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
         bpreserr = 0.0
 
     if input.size > 0:
-        input[:] /= numpy.product(Nmesh)
+        input[:] /= numpy.prod(Nmesh)
         # some distributions have no input value
         c2rerr = numpy.abs(original - input).max()
     else:
@@ -200,7 +200,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
     #    print(repr(forward.type), 'preserve', "error = ", fpreserr)
     #    print(repr(forward.type), 'forward', "error = ", r2cerr)
     #    print(repr(forward.type), 'backward', "error = ", c2rerr)
-    
+
     fpreserr = MPI.COMM_WORLD.allreduce(fpreserr, MPI.MAX)
     bpreserr = MPI.COMM_WORLD.allreduce(bpreserr, MPI.MAX)
     r2cerr = MPI.COMM_WORLD.allreduce(r2cerr, MPI.MAX)
@@ -229,7 +229,7 @@ def main():
     Nmesh = ns.Nmesh
 
     if len(Nmesh) == 0:
-        # default 
+        # default
         Nmesh = [[29, 30, 31]]
 
     if MPI.COMM_WORLD.size == 1 and len(ns.Nproc) == 0:
