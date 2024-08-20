@@ -15,7 +15,7 @@ def build_pfft(prefix, compiler, cflags):
     # Avoid enabling SSE2 by default. aarch64 doesn't have it.
     # optimize="--enable-sse2"
     optimize=""
-    line = ('CFLAGS="%s -fvisibility=hidden" ' % cflags+
+    line = ('CFLAGS="%s -fvisibility=hidden -Wno-error=incompatible-pointer-types" ' % cflags+
             'MPICC="%s" ' % compiler +
             'CC="%s" ' % compiler +
             'sh %s/depends/install_pfft.sh ' % package_basedir +
