@@ -1,0 +1,48 @@
+# main test workflow; ported from .travis.yaml
+name: main
+
+on:
+  push:
+    branches: [ '*', $default-branch ]
+  pull_request:
+    branches: [ $default-branch ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    strategy:
+        matrix:
+            python-version: ['3.10', '3.12']
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+    - name: Install build deps
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install openmpi-bin libopenmpi-dev
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Build
+      run: |
+        python -m pip install setuptools wheel nose mpi4py numpy cython build runtests
+        python -m build
+    - name: Install
+      run: |
+        python -m pip install `ls dist/pfft_python*.whl`
+    - name: Unit tests
+      run: |
+        python ./runtests.py --mpirun="mpirun -np 4"
+    - name: Roundtrips
+      run: |
+        mpirun -n 1 python $PWD/scripts/pfft-roundtrip-matrix.py -v -diag -Nproc 1 1 -Nmesh 13 15 16
+        mpirun -n 2 python $PWD/scripts/pfft-roundtrip-matrix.py -v -diag -Nproc 2 1 -Nproc 1 2 -Nmesh 13 15 16
+        mpirun -n 4 python $PWD/scripts/pfft-roundtrip-matrix.py -v -diag -Nproc 2 2 -Nmesh 13 15 16
+        mpirun -n 4 python $PWD/scripts/pfft-roundtrip-matrix.py -v -diag -Nproc 2 2 -Nmesh 13 15
+    - name: Version
+      run: |
+        bash check_tag.sh pfft/version.py
