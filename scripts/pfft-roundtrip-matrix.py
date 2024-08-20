@@ -183,7 +183,7 @@ def test_roundtrip_3d(procmesh, type, flags, inplace, Nmesh):
         bpreserr = 0.0
 
     if input.size > 0:
-        input[:] /= numpy.product(Nmesh)
+        input[:] /= numpy.prod(Nmesh)
         # some distributions have no input value
         c2rerr = numpy.abs(original - input).max()
     else:

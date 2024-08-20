@@ -51,7 +51,7 @@ plan.execute(buffer)
 output = buffer.view_output()
 
 # denormalize the forward transform
-output /= numpy.product(partition.n)
+output /= numpy.prod(partition.n)
 
 iplan.execute(buffer)
 
