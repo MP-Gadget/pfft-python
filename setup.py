@@ -21,7 +21,7 @@ def build_pfft(prefix, compiler, cflags):
             'sh %s/depends/install_pfft.sh ' % package_basedir +
              os.path.abspath(prefix) +
             ' %s' % optimize)
-    if os.path.exists(os.path.join(prefix, 
+    if os.path.exists(os.path.join(prefix,
         'lib', 'libpfft.a')):
         return
 
@@ -42,10 +42,10 @@ class build_ext_subclass(build_ext):
 
         self.mpicc = os.environ.get('MPICC', compiler)
 
-        build_ext.initialize_options(self)    
+        build_ext.initialize_options(self)
 
     def finalize_options(self):
-        build_ext.finalize_options(self)    
+        build_ext.finalize_options(self)
         self.pfft_build_dir = os.path.join(self.build_temp, 'depends')
 
         self.include_dirs.insert(0, os.path.join(
@@ -56,13 +56,13 @@ class build_ext_subclass(build_ext):
         self.compiler.compiler_so[0] = self.mpicc
         self.compiler.linker_so[0] = self.mpicc
         build_pfft(self.pfft_build_dir, self.mpicc, ' '.join(self.compiler.compiler_so[1:]))
-        link_objects = [ 
-                'libpfft.a', 
+        link_objects = [
+                'libpfft.a',
                 'libpfftf.a',
-                'libfftw3_mpi.a', 
-                'libfftw3.a', 
-                'libfftw3f_mpi.a', 
-                'libfftw3f.a', 
+                'libfftw3_mpi.a',
+                'libfftw3.a',
+                'libfftw3f_mpi.a',
+                'libfftw3f.a',
                 ]
 
         link_objects = [list(glob.glob(os.path.join(self.pfft_build_dir, '*', i)))[0] for i in link_objects]
@@ -96,10 +96,10 @@ setup(
     install_requires=['cython', 'numpy', 'mpi4py'],
     packages= ['pfft', 'pfft.tests'],
     requires=['numpy'],
-    ext_modules = cythonize([Extension( 
-                "pfft.core", 
+    ext_modules = cythonize([Extension(
+                "pfft.core",
                 ["pfft/core.pyx"],
-                include_dirs=["./", 
+                include_dirs=["./",
                 numpy.get_include(),
                 ],
                 libraries=['m'],
@@ -111,4 +111,3 @@ setup(
         "build_py":build_py,
         "build_ext": build_ext_subclass}
 )
-
