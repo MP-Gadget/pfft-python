@@ -789,7 +789,6 @@ cdef class LocalBuffer:
 
     def view_input(self, type=numpy.ndarray):
         cdef numpy.dtype dt = self.partition.i_dtype
-        #Replaces NPY_BEHAVED
         cdef arrflags = numpy.NPY_ARRAY_C_CONTIGUOUS | numpy.NPY_ARRAY_ALIGNED | numpy.NPY_ARRAY_WRITEABLE | numpy.NPY_ARRAY_NOTSWAPPED
         cdef numpy.ndarray a = numpy.PyArray_New(type,
                 self.partition.ndim,
@@ -804,7 +803,7 @@ cdef class LocalBuffer:
 
     def view_output(self, type=numpy.ndarray):
         cdef numpy.dtype dt = self.partition.o_dtype
-
+        cdef arrflags = numpy.NPY_ARRAY_C_CONTIGUOUS | numpy.NPY_ARRAY_ALIGNED | numpy.NPY_ARRAY_WRITEABLE | numpy.NPY_ARRAY_NOTSWAPPED
         cdef numpy.ndarray a = numpy.PyArray_New(type,
                 self.partition.ndim,
                 <numpy.intp_t*>self.partition.local_o_shape.data,
