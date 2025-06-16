@@ -775,24 +775,28 @@ cdef class LocalBuffer:
             dt = numpy.dtype('f4')
         cdef numpy.intp_t alloc_local = 2 * self.partition.alloc_local
         cdef numpy.intp_t strides = dt.itemsize
+        #Replaces NPY_BEHAVED
+        cdef arrflags = numpy.NPY_ARRAY_C_CONTIGUOUS | numpy.NPY_ARRAY_ALIGNED | numpy.NPY_ARRAY_WRITEABLE | numpy.NPY_ARRAY_NOTSWAPPED
         cdef numpy.ndarray a = numpy.PyArray_New(type,
                 1,
                 <numpy.intp_t*>&alloc_local,
                 dt.type_num,
                 <numpy.intp_t*>&strides,
-                self.ptr, dt.itemsize, numpy.NPY_BEHAVED, None)
+                self.ptr, dt.itemsize, arrflags, None)
 
         numpy.set_array_base(a, self)
         return a
 
     def view_input(self, type=numpy.ndarray):
         cdef numpy.dtype dt = self.partition.i_dtype
+        #Replaces NPY_BEHAVED
+        cdef arrflags = numpy.NPY_ARRAY_C_CONTIGUOUS | numpy.NPY_ARRAY_ALIGNED | numpy.NPY_ARRAY_WRITEABLE | numpy.NPY_ARRAY_NOTSWAPPED
         cdef numpy.ndarray a = numpy.PyArray_New(type,
                 self.partition.ndim,
                 <numpy.intp_t*>self.partition.local_i_shape.data,
                 dt.type_num,
                 <numpy.intp_t*>self.partition.local_i_strides.data,
-                self.ptr, dt.itemsize, numpy.NPY_BEHAVED, None)
+                self.ptr, dt.itemsize, arrflags, None)
 
         numpy.set_array_base(a, self)
 
@@ -806,7 +810,7 @@ cdef class LocalBuffer:
                 <numpy.intp_t*>self.partition.local_o_shape.data,
                 dt.type_num, <numpy.intp_t*>
                     self.partition.local_o_strides.data,
-                self.ptr, dt.itemsize, numpy.NPY_BEHAVED, None)
+                self.ptr, dt.itemsize, arrflags, None)
 
         numpy.set_array_base(a, self)
 
