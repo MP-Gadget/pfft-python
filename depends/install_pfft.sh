@@ -37,6 +37,17 @@ fi
 gzip -dc $ROOT/depends/pfft-$PFFT_VERSION.tar.gz | tar xf - -C $TMP
 cd $TMP
 
+# =====================================================================
+# Update config files to support modern architectures (e.g., Apple Silicon ARM64)
+# =====================================================================
+echo "Updating config.sub and config.guess for Apple Silicon support..."
+curl -s -L -o pfft-${PFFT_VERSION}/build-aux/config.sub "https://raw.githubusercontent.com/gcc-mirror/gcc/master/config.sub"
+curl -s -L -o pfft-${PFFT_VERSION}/build-aux/config.guess "https://raw.githubusercontent.com/gcc-mirror/gcc/master/config.guess"
+
+curl -s -L -o pfft-${PFFT_VERSION}/fftw3/config.sub "https://raw.githubusercontent.com/gcc-mirror/gcc/master/config.sub"
+curl -s -L -o pfft-${PFFT_VERSION}/fftw3/config.guess "https://raw.githubusercontent.com/gcc-mirror/gcc/master/config.guess"
+# =====================================================================
+
 (
 mkdir -p double;cd double
 
